@@ -21,3 +21,12 @@ misconfigurations:
   - id: AWS-0057
     paths: [bootstrap/iam.tf, deploy.tf]
     statement: CloudFront/API Gateway/ACM and the read-only metadata calls cannot be limited by resource name in IAM; the app's roles are further capped by a permissions boundary.
+  - id: GIT-0001
+    paths: [bootstrap/github.tf]
+    statement: The repository is public by design (free, open-source community project).
+  - id: GIT-0003
+    paths: [bootstrap/github.tf]
+    statement: Vulnerability alerts are enabled by the separate github_repository_vulnerability_alerts resource, which the scanner does not see.
+  - id: AWS-0345
+    paths: [bootstrap/iam.tf]
+    statement: s3:* is limited to buckets named fsh-* (this app's own); the app must create and manage its buckets, and a permissions boundary caps every role it creates.
