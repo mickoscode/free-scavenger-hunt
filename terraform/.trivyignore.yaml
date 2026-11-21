@@ -1,0 +1,23 @@
+# Accepted Trivy findings. Each entry needs a reason; remove it if the design changes.
+misconfigurations:
+  - id: AWS-0132
+    paths: [site.tf, bootstrap/state.tf]
+    statement: Site content is public and state is protected by IAM; SSE-S3 (AES256) is sufficient and a customer-managed key would only add cost.
+  - id: AWS-0011
+    paths: [site.tf]
+    statement: No WAF by design (cost); the static site has no sensitive endpoints.
+  - id: AWS-0013
+    paths: [site.tf]
+    statement: The default CloudFront certificate cannot set a TLS minimum; a custom domain will enforce TLSv1.2_2021.
+  - id: AWS-0010
+    paths: [site.tf]
+    statement: CloudFront access logging is not needed for a free community site; it would add a bucket and cost.
+  - id: AWS-0089
+    paths: [site.tf, bootstrap/state.tf]
+    statement: S3 access logging is not needed here.
+  - id: AWS-0090
+    paths: [site.tf]
+    statement: The site bucket is rebuilt from git on every deploy, so versioning is off on purpose.
+  - id: AWS-0057
+    paths: [bootstrap/iam.tf, deploy.tf]
+    statement: CloudFront/API Gateway/ACM and the read-only metadata calls cannot be limited by resource name in IAM; the app's roles are further capped by a permissions boundary.

@@ -1,0 +1,26 @@
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      github-actions:
+        patterns: ["*"]
+
+  # Provider updates (also refresh the lock files). Each PR gets the usual plan comment: review it before merging.
+  - package-ecosystem: "terraform"
+    directories: ["/terraform", "/terraform/bootstrap"]
+    schedule:
+      interval: "weekly"
+    groups:
+      terraform:
+        patterns: ["*"]
+
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      npm:
+        patterns: ["*"]

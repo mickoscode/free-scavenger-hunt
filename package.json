@@ -1,0 +1,13 @@
+{
+  "name": "free-scavenger-hunt",
+  "private": true,
+  "type": "module",
+  "description": "A website that lets anyone create and run a free scavenger hunt for their community.",
+  "scripts": {
+    "build": "bash scripts/build.sh",
+    "test": "npm run build && node --test \"tests/unit/*.test.js\""
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}
