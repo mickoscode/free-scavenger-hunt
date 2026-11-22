@@ -1,0 +1,70 @@
+name: Deploy site
+
+# Publishes web/ to the site bucket on every merge to main that touches it, and after each Terraform apply.
+# Runs from main only: the deploy role (terraform/deploy.tf) trusts nothing else.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "web/**"
+      - "scripts/build.sh"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/deploy.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: false
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION }}
+    steps:
+      - name: Checkout repository code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+
+      - name: Build and test
+        run: npm test
+
+      - name: Configure AWS credentials (deploy role)
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/fsh-deploy
+          aws-region: ${{ vars.AWS_REGION }}
+
+      # The distribution is found by its comment, so no ID is stored anywhere. Before the first Terraform apply
+      # there is nothing to deploy to: say so and stop (the apply starts this workflow again when it finishes).
+      - name: Find the site
+        id: site
+        run: |
+          id=$(aws cloudfront list-distributions --query "DistributionList.Items[?Comment=='free-scavenger-hunt'].Id | [0]" --output text)
+          if [ -z "$id" ] || [ "$id" = "None" ]; then
+            echo "::warning::The site infrastructure does not exist yet. Approve the Terraform apply; it starts this deploy afterwards."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "ready=true" >> "$GITHUB_OUTPUT"
+          echo "id=$id" >> "$GITHUB_OUTPUT"
+
+      - name: Sync dist to S3
+        if: steps.site.outputs.ready == 'true'
+        run: aws s3 sync ./dist/ "s3://fsh-site-${{ vars.AWS_ACCOUNT_ID }}" --delete --cache-control "no-cache"
+
+      - name: Invalidate CloudFront cache
+        if: steps.site.outputs.ready == 'true'
+        run: aws cloudfront create-invalidation --distribution-id "${{ steps.site.outputs.id }}" --paths "/*"

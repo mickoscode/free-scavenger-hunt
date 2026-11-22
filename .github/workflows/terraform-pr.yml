@@ -1,0 +1,203 @@
+name: Terraform PR checks
+
+# Pull requests that touch terraform/. Jobs are skipped (not absent) when terraform/ is unchanged, so they can be
+# required status checks. No secrets: the plan assumes a read-only AWS role through GitHub OIDC.
+on:
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: terraform-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  TF_IN_AUTOMATION: "true"
+  TF_INPUT: "false"
+
+jobs:
+  changes:
+    name: Detect terraform changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      terraform: ${{ steps.diff.outputs.terraform }}
+    steps:
+      - name: Checkout repository code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Check for terraform changes
+        id: diff
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          if git diff --name-only "$BASE_SHA...$HEAD_SHA" | grep -qE '^(terraform/|\.github/workflows/terraform-pr\.yml$)'; then
+            echo "terraform=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "terraform=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  validate:
+    name: Terraform validate
+    needs: changes
+    if: needs.changes.outputs.terraform == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
+        with:
+          terraform_wrapper: false
+
+      - name: Terraform fmt
+        run: terraform fmt -check -recursive -diff terraform
+
+      # No backend and no AWS access needed to validate the syntax of either configuration.
+      - name: Terraform validate (app)
+        working-directory: terraform
+        run: |
+          terraform init -backend=false
+          terraform validate -no-color
+
+      - name: Terraform validate (bootstrap)
+        working-directory: terraform/bootstrap
+        run: |
+          terraform init -backend=false
+          terraform validate -no-color
+
+      - name: Setup TFLint
+        uses: terraform-linters/setup-tflint@6ffdbaa3be476b3431f7275c26966ef32ff60337 # v6.3.2
+        with:
+          tflint_version: v0.64.0
+
+      - name: TFLint
+        working-directory: terraform
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          tflint --init
+          tflint --recursive --format compact
+
+  security-scan:
+    name: Terraform security scan
+    needs: changes
+    if: needs.changes.outputs.terraform == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Trivy config scan
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scan-type: config
+          scan-ref: terraform
+          severity: HIGH,CRITICAL
+          trivyignores: terraform/.trivyignore.yaml
+          exit-code: "1"
+          format: table
+
+  plan:
+    name: Terraform plan
+    needs: [changes, validate]
+    if: needs.changes.outputs.terraform == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      id-token: write # OIDC token for the read-only AWS plan role
+      pull-requests: write # post/update the plan comment
+    steps:
+      - name: Checkout repository code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
+        with:
+          terraform_wrapper: false
+
+      - name: Configure AWS credentials (read-only plan role)
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: ${{ vars.AWS_PLAN_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Terraform init
+        working-directory: terraform
+        run: terraform init
+
+      # -lock=false: a plan only reads, and the read-only role may not write the lock file.
+      - name: Terraform plan
+        id: plan
+        working-directory: terraform
+        run: |
+          set +e
+          terraform plan -no-color -lock=false -detailed-exitcode 2>&1 | tee "$RUNNER_TEMP/plan.txt"
+          code=${PIPESTATUS[0]}
+          echo "exitcode=$code" >> "$GITHUB_OUTPUT"
+          if [ "$code" -eq 0 ] || [ "$code" -eq 2 ]; then exit 0; fi
+          exit "$code"
+
+      - name: Build plan summary
+        if: always() && steps.plan.outcome != 'skipped'
+        env:
+          EXIT_CODE: ${{ steps.plan.outputs.exitcode }}
+        run: |
+          plan="$RUNNER_TEMP/plan.txt"
+          case "$EXIT_CODE" in
+            0) status="✅ **No changes.** Infrastructure matches the configuration." ;;
+            2) status="📝 **Changes proposed:** $(grep -E '^Plan: ' "$plan" | tail -n1)" ;;
+            *) status="❌ **Plan failed.** See the workflow log for the error." ;;
+          esac
+          {
+            echo "<!-- terraform-plan-comment -->"
+            echo "### Terraform plan"
+            echo
+            echo "$status"
+            echo
+            if [ "$EXIT_CODE" = "2" ]; then
+              echo "<details><summary>Resources affected</summary>"
+              echo
+              echo '```'
+              grep -E '^\s*# .* (will be|must be) ' "$plan" | sed -E 's/^\s+//' | head -n 100
+              echo '```'
+              echo "</details>"
+              echo
+            fi
+            echo "_Commit ${GITHUB_SHA::7} · [workflow run]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID)_"
+          } > "$RUNNER_TEMP/summary.md"
+          cat "$RUNNER_TEMP/summary.md" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Comment plan on PR
+        if: always() && steps.plan.outcome != 'skipped' && github.actor != 'dependabot[bot]'
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const fs = require('fs');
+            const body = fs.readFileSync(`${process.env.RUNNER_TEMP}/summary.md`, 'utf8');
+            const marker = '<!-- terraform-plan-comment -->';
+            const { owner, repo } = context.repo;
+            const issue_number = context.issue.number;
+            const comments = await github.paginate(github.rest.issues.listComments, { owner, repo, issue_number });
+            const existing = comments.find(c => c.body && c.body.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({ owner, repo, comment_id: existing.id, body });
+            } else {
+              await github.rest.issues.createComment({ owner, repo, issue_number, body });
+            }
