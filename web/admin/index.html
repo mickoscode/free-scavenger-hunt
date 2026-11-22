@@ -116,12 +116,16 @@
 
     <form id="create-form" class="card card-body mt-4" novalidate>
       <h2 class="h5">Create a hunt</h2>
-      <div class="row g-2">
-        <div class="col-12 col-md-6"><label class="form-label" for="new-name">Name</label>
-          <input id="new-name" class="form-control" maxlength="80" placeholder="Sorrento Youth Scavenger Hunt" data-testid="new-name"></div>
-        <div class="col-12 col-md-6"><label class="form-label" for="new-slug">Address <span class="text-muted small">(the name in the web address)</span></label>
-          <div class="input-group"><span class="input-group-text" id="new-prefix">/e/</span><input id="new-slug" class="form-control" maxlength="40" autocapitalize="off" placeholder="sorrento-youth" data-testid="new-slug"></div></div>
-        <div class="col-12"><label class="form-label" for="new-tz">Time zone</label><select id="new-tz" class="form-select" data-testid="new-tz"></select></div>
+      <p class="small text-muted">Give your hunt a name to get started. You can change almost everything later.</p>
+      <div class="row g-3">
+        <div class="col-12 col-md-6"><label class="form-label" for="new-name">Name of your hunt</label>
+          <input id="new-name" class="form-control" maxlength="80" placeholder="e.g. Summer Fun Hunt" data-testid="new-name" aria-describedby="new-name-help">
+          <div class="form-text" id="new-name-help">This is what players see at the top of the game. The grey text is only an example: type your own name.</div></div>
+        <div class="col-12 col-md-6"><label class="form-label" for="new-slug">Web address</label>
+          <div class="input-group"><span class="input-group-text" id="new-prefix">/e/</span><input id="new-slug" class="form-control" maxlength="40" autocapitalize="off" placeholder="e.g. summer-fun-hunt" data-testid="new-slug" aria-describedby="new-slug-help"></div>
+          <div class="form-text" id="new-slug-help">The last part of the link players use. It fills in from your name, so you can usually leave it. Letters, numbers and dashes only. It can't be changed later.</div></div>
+        <div class="col-12"><label class="form-label" for="new-tz">Time zone</label><select id="new-tz" class="form-select" data-testid="new-tz"></select>
+          <div class="form-text">Where your event takes place, so the start and finish times are right.</div></div>
       </div>
       <button class="btn btn-primary mt-3 align-self-start" type="submit" data-testid="create-button">Create hunt</button>
       <p class="text-danger mt-2 mb-0" role="alert" data-testid="create-error" hidden></p>

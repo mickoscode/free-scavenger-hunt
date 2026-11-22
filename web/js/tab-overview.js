@@ -56,8 +56,8 @@ export async function mountOverview(body, ctx) {
     el('div', { class: 'row g-2' }, el('div', { class: 'col-12 col-md-5' }, confirmEvent), el('div', { class: 'col-12 col-md-auto' }, eventButton)),
     dangerResult);
 
-  const copyName = el('input', { class: 'form-control', placeholder: 'Name of the new hunt', maxlength: '80', 'data-testid': 'copy-name' });
-  const copySlug = el('input', { class: 'form-control', placeholder: 'new-address', maxlength: '40', autocapitalize: 'off', 'data-testid': 'copy-slug' });
+  const copyName = el('input', { class: 'form-control', placeholder: 'e.g. Winter Fun Hunt', maxlength: '80', 'data-testid': 'copy-name' });
+  const copySlug = el('input', { class: 'form-control', placeholder: 'e.g. winter-fun-hunt', maxlength: '40', autocapitalize: 'off', 'data-testid': 'copy-slug' });
   const copyButton = el('button', { type: 'button', class: 'btn btn-outline-primary', 'data-testid': 'copy-hunt' }, 'Make a copy');
   copyName.addEventListener('input', () => { if (!copySlug.dataset.touched) copySlug.value = copyName.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40); });
   copySlug.addEventListener('input', () => { copySlug.dataset.touched = '1'; });
