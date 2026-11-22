@@ -211,3 +211,10 @@ html.smooth-scroll { scroll-behavior: smooth; } /* only the About page has in-pa
   #print-sheet img { width: 14cm; max-width: 100%; height: auto; image-rendering: pixelated; }
   #print-sheet .print-url { font-size: 13pt; margin-top: .6cm; overflow-wrap: anywhere; }
 }
+
+/* ---- Folding zones in the question editor ---- */
+.zone-toggle { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: .5rem; text-align: left; border: 0; background: none; padding: .35rem 0; font: inherit; font-weight: 600; color: inherit; cursor: pointer; }
+.zone-toggle:hover .zone-toggle-title { text-decoration: underline; }
+.zone-chevron { flex: 0 0 auto; width: 1.1rem; text-align: center; color: var(--fsh-blue, #0d6efd); }
+.zone-toggle-title { flex: 1 1 auto; min-width: 0; }
+.zone-toggle-count { flex: 0 0 auto; font-weight: 400; }
