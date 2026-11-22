@@ -30,3 +30,10 @@ See `README.md` (layout, workflows) and `docs/setup.md` (wiring).
 - Run `npm test` (fast) and `npm run test:browser` (Chromium) before a PR; `node scripts/smoke-test.js <url>` checks a running site.
 - Deploy: merging `api/` or `web/` changes deploys automatically; infrastructure changes need the apply approval.
 - Privacy: never store personal data (no email, names or addresses; rate counters use `clientKey`, a hash). Account recovery is by one-time recovery codes (`routes-auth.js`), not email.
+
+## Security rules (see docs/security.md)
+
+- Never add a secret, key or token to the repo or GitHub. Never widen the CI roles or the boundary without saying so; every new AWS service goes through `bootstrap/iam.tf`.
+- Any new `/api/admin/*` or `/api/site/*` route must pass `tests/api/security.test.js` unchanged (it enumerates routes). Never trust a client address except through `clientKey`. Never put user text into the DOM except with `textContent`.
+- Workflows: no `pull_request_target`; never interpolate event data into a script (use `env:`); new third-party actions must be pinned by SHA and added to `patterns_allowed` in `bootstrap/github.tf`.
+- Git identity for this repo is the GitHub no-reply address: never commit with a personal email.

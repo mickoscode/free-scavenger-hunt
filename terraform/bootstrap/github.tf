@@ -61,6 +61,43 @@ resource "github_workflow_repository_permissions" "this" {
   can_approve_pull_request_reviews = false
 }
 
+# Which actions workflows may use: GitHub's own, plus exactly the four third party ones this repository needs (all pinned to a
+# commit, which is also enforced). A pull request cannot pull in any other action.
+resource "github_actions_repository_permissions" "this" {
+  repository           = github_repository.this.name
+  enabled              = true
+  allowed_actions      = "selected"
+  sha_pinning_required = true
+
+  allowed_actions_config {
+    github_owned_allowed = true
+    verified_allowed     = false
+    patterns_allowed = [
+      "hashicorp/setup-terraform@*",
+      "terraform-linters/setup-tflint@*",
+      "aquasecurity/trivy-action@*",
+      "aquasecurity/setup-trivy@*",
+      "aws-actions/configure-aws-credentials@*",
+    ]
+  }
+}
+
+# Workflows from forks and from first time contributors wait for the owner's approval before they run anything.
+# (The GitHub provider has no resource for this setting yet, so it is applied through the API.)
+resource "terraform_data" "fork_pr_approval" {
+  triggers_replace = ["all_external_contributors", github_repository.this.name]
+
+  provisioner "local-exec" {
+    environment = { REPO = "${var.github_owner}/${github_repository.this.name}" }
+    command     = "curl -fsS -X PUT -H \"Authorization: Bearer $GITHUB_TOKEN\" -H 'Accept: application/vnd.github+json' https://api.github.com/repos/$REPO/actions/permissions/fork-pr-contributor-approval -d '{\"approval_policy\":\"all_external_contributors\"}'"
+  }
+}
+
+resource "github_repository_dependabot_security_updates" "this" {
+  repository = github_repository.this.name
+  enabled    = true
+}
+
 # The protected branch. No bypass actors: nobody, including the administrator, can push straight to main.
 # One approval is not required because the administrator is usually the only reviewer (GitHub does not let
 # anyone approve their own pull request); the required checks are the gate.

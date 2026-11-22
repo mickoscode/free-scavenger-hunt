@@ -11,6 +11,7 @@ on:
       - "scripts/build.sh"
       - "scripts/package-backend.sh"
       - "scripts/smoke-test.js"
+      - "scripts/security-probe.js"
       - "terraform/csp.txt"
       - "package.json"
       - "package-lock.json"
@@ -96,6 +97,11 @@ jobs:
       - name: Smoke test
         if: steps.site.outputs.ready == 'true'
         run: node scripts/smoke-test.js "${{ steps.site.outputs.url }}"
+
+      # Attacks the live site (read-only): security headers, anonymous access to admin routes, forms and CORS, odd paths.
+      - name: Security probe
+        if: steps.site.outputs.ready == 'true'
+        run: node scripts/security-probe.js "${{ steps.site.outputs.url }}"
 
       - name: Summary
         if: steps.site.outputs.ready == 'true'

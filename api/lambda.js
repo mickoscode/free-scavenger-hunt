@@ -1,4 +1,4 @@
-// AWS Lambda entry point (API Gateway HTTP API, payload format 2.0). Needs FSH_TABLE and FSH_ASSETS_BUCKET.
+// AWS Lambda entry point (API Gateway HTTP API, payload format 2.0). Needs FSH_TABLE and FSH_ASSETS_BUCKET; FSH_ORIGIN_SECRET makes it refuse requests that did not come through CloudFront.
 import { createApp } from './app.js';
 import { createS3Assets } from './assets.js';
 import { createDynamoStore } from './store/dynamo.js';
@@ -8,6 +8,7 @@ async function getApp() {
   app ??= createApp({
     store: createDynamoStore({ tableName: process.env.FSH_TABLE }),
     assets: await createS3Assets({ bucket: process.env.FSH_ASSETS_BUCKET }),
+    originSecret: process.env.FSH_ORIGIN_SECRET ?? '',
   });
   return app;
 }

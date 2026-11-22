@@ -265,6 +265,38 @@ data "aws_iam_policy_document" "apply" {
     ]
   }
 
+  # CloudFront and API Gateway cannot be limited by name in IAM, so this role could otherwise change any distribution or API in
+  # the account. These denials leave it able to modify only resources tagged Project=free-scavenger-hunt (Terraform tags
+  # everything it creates), so other projects' distributions and APIs cannot be touched.
+  statement {
+    sid    = "OnlyOwnDistributions"
+    effect = "Deny"
+    actions = [
+      "cloudfront:UpdateDistribution", "cloudfront:DeleteDistribution", "cloudfront:TagResource", "cloudfront:UntagResource",
+      "cloudfront:CreateInvalidation", "cloudfront:UpdateDistributionWithStagingConfig", "cloudfront:AssociateAlias",
+    ]
+    resources = ["arn:aws:cloudfront::${local.account_id}:distribution/*"]
+
+    condition {
+      test     = "StringNotEquals"
+      variable = "aws:ResourceTag/Project"
+      values   = ["free-scavenger-hunt"]
+    }
+  }
+
+  statement {
+    sid       = "OnlyOwnApis"
+    effect    = "Deny"
+    actions   = ["apigateway:PUT", "apigateway:PATCH", "apigateway:DELETE", "apigateway:POST"]
+    resources = ["arn:aws:apigateway:*::/apis/*"]
+
+    condition {
+      test     = "StringNotEquals"
+      variable = "aws:ResourceTag/Project"
+      values   = ["free-scavenger-hunt"]
+    }
+  }
+
   statement {
     sid       = "NeverRemoveBoundary"
     effect    = "Deny"

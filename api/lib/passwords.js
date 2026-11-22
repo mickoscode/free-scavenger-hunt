@@ -54,3 +54,23 @@ export function newRecoverySet(username) {
   const codes = Array.from({ length: RECOVERY_CODE_COUNT }, recoveryCode);
   return { codes, hashes: codes.map((c) => hashRecoveryCode(username, c)) };
 }
+
+// ---- password and username policy
+const COMMON = ['password', 'passw0rd', '1234567890', '0123456789', 'qwertyuiop', 'qwerty1234', 'iloveyou12', 'letmein123', 'welcome123',
+  'abcdefghij', 'administrator', 'scavenger', 'adminadmin', 'changeme12', 'password123', 'password1234'];
+// -> null when acceptable, else 'invalid-password' (length) or 'weak-password'.
+export function passwordProblem(password, username = '') {
+  if (typeof password !== 'string' || password.length < 10 || password.length > 200) return 'invalid-password';
+  const lower = password.toLowerCase();
+  if (new Set(lower).size < 5) return 'weak-password';
+  if (username.length >= 4 && lower.includes(username.toLowerCase())) return 'weak-password';
+  // A common password, even with a few characters added ('Password1234!'), but not a passphrase that merely contains a word.
+  const plain = lower.replace(/[^a-z0-9]/g, '');
+  if (COMMON.some((c) => plain === c || (plain.startsWith(c) && plain.length <= c.length + 4))) return 'weak-password';
+  return null;
+}
+
+// Names that could be used to pose as the site or its staff.
+export const RESERVED_USERNAMES = ['admin', 'administrator', 'root', 'support', 'help', 'security', 'staff', 'moderator', 'siteadmin', 'site-admin', 'owner',
+  'system', 'official', 'scavenger', 'scavengerhunt', 'free-scavenger-hunt', 'webmaster', 'postmaster', 'noreply'];
+export const isReservedUsername = (name) => RESERVED_USERNAMES.includes(name.replace(/[-_]/g, '')) || RESERVED_USERNAMES.includes(name);

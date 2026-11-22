@@ -65,6 +65,21 @@ resource "aws_cloudfront_response_headers_policy" "security" {
   name    = "${local.name}-security-headers"
   comment = "Browser security headers for every response"
 
+  # What the pages never need, switched off: a compromised page could not use the camera, microphone or location.
+  custom_headers_config {
+    items {
+      header   = "Permissions-Policy"
+      value    = "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()"
+      override = true
+    }
+
+    items {
+      header   = "Cross-Origin-Opener-Policy"
+      value    = "same-origin"
+      override = true
+    }
+  }
+
   security_headers_config {
     strict_transport_security {
       access_control_max_age_sec = 31536000
@@ -143,6 +158,11 @@ resource "aws_cloudfront_distribution" "site" {
   origin {
     domain_name = replace(aws_apigatewayv2_api.api.api_endpoint, "https://", "")
     origin_id   = "api"
+
+    custom_header {
+      name  = "x-origin-verify"
+      value = random_password.origin_secret.result
+    }
 
     custom_origin_config {
       http_port              = 80
