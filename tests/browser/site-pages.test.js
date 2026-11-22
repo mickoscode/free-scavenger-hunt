@@ -30,6 +30,9 @@ test('the front page keeps its original wording, is inviting, and leads to About
       assert.equal(await page.locator('.chip').count(), 5);
       assert.equal(await page.locator('ol.steps li').count(), 3);
       assert.equal(await noSideScroll(page), true, `${label}: sideways scrolling`);
+      const made = await page.locator('.footer-made').boundingBox();
+      const footerLink = await page.locator('.footer-links a').first().boundingBox();
+      assert.ok(made.y + made.height <= footerLink.y + 1, `${label}: the footer links belong on their own line below the text`);
       await h.shot(page, `50-front-${label}`);
 
       await page.click(tid('about-link'));
