@@ -79,3 +79,5 @@ Users table (hunt count and limit, suspend / activate, reset password to a one-t
 Recovery by email (needs a sending domain and AWS email production access, and would store an address; the codes cover it without), custom domain, download of results, CSV export, translations.
 
 - **Help toggles**: long explanations on forms (create hunt, settings, recovery codes, sign-up, duplicate, photo scoring) are hidden behind a small round `?` button beside the heading or label (`web/js/help.js`); pressing it shows or hides the text. Plain-HTML pages mark the text with `data-help-for="<id of the label or heading>"`.
+
+- **Folding zones**: in the question editor, when a hunt has more than one zone, each zone has a header (zone number, name, question count) that folds the zone away or opens it again, and stays put while folded; its up and down buttons are on the header so a folded zone can still be reordered. *Fold all zones* and *Open all zones* sit above the list. Folded zones are still saved. Everything starts open; folding is not remembered after leaving the tab.

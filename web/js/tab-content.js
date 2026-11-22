@@ -19,8 +19,21 @@ export async function mountContent(body, ctx) {
   const touch = () => { dirty = true; };
   window.onbeforeunload = () => (dirty ? 'You have unsaved changes.' : undefined);
 
+  // Which zones are folded away (by zone id, so moving or editing a zone keeps it folded). Only matters when there is more than one zone.
+  const collapsed = new Set();
   const root = el('div', { 'data-testid': 'editor' });
-  const render = () => root.replaceChildren(...state.zones.map(zoneCard), addZoneButton());
+  const render = () => {
+    for (const id of [...collapsed]) if (!state.zones.some((z) => z.id === id)) collapsed.delete(id);
+    const many = state.zones.length > 1;
+    const all = many ? el('div', { class: 'd-flex flex-wrap gap-2 mb-2', 'data-testid': 'zone-folding' },
+      el('button', { type: 'button', class: 'btn btn-sm btn-outline-secondary', 'data-testid': 'zones-collapse-all' }, 'Fold all zones'),
+      el('button', { type: 'button', class: 'btn btn-sm btn-outline-secondary', 'data-testid': 'zones-expand-all' }, 'Open all zones')) : null;
+    if (all) {
+      all.children[0].addEventListener('click', () => { state.zones.forEach((z) => collapsed.add(z.id)); render(); });
+      all.children[1].addEventListener('click', () => { collapsed.clear(); render(); });
+    }
+    root.replaceChildren(...[all, ...state.zones.map(zoneCard), addZoneButton()].filter(Boolean));
+  };
 
   const lockable = (node) => { node.disabled = locked; return node; };
   function textInput(value, onInput, attrs = {}) {
@@ -111,12 +124,29 @@ export async function mountContent(body, ctx) {
 
   function zoneCard(zone, zi) {
     const add = (type) => { zone.questions.push(blankQuestion(zone, type)); touch(); render(); };
-    return el('section', { class: 'editor-zone card card-body mb-3', 'data-testid': 'editor-zone' },
+    const many = state.zones.length > 1;
+    const folded = many && collapsed.has(zone.id);
+    const count = zone.questions.length;
+    const title = `Zone ${zi + 1}${zone.name.trim() ? `: ${zone.name.trim()}` : ''}`;
+
+    // The header (only when there are several zones): press it to fold the zone away or open it again; the zone can still be moved while folded.
+    const titleText = el('span', { class: 'zone-toggle-title team-name' }, title);
+    const toggle = el('button', { type: 'button', class: 'zone-toggle', 'aria-expanded': String(!folded), 'data-testid': 'zone-toggle' },
+      el('span', { class: 'zone-chevron', 'aria-hidden': 'true' }, folded ? '▸' : '▾'),
+      titleText,
+      el('span', { class: 'small text-muted zone-toggle-count' }, `${count} question${count === 1 ? '' : 's'}`));
+    toggle.addEventListener('click', () => { if (folded) collapsed.delete(zone.id); else collapsed.add(zone.id); render(); });
+    const header = many ? el('div', { class: `d-flex gap-2 align-items-center${folded ? '' : ' mb-3'}`, 'data-testid': 'zone-header' }, toggle,
+      button('↑', () => move(state.zones, zi, -1), 'btn-outline-secondary', { 'aria-label': 'Move zone up' }),
+      button('↓', () => move(state.zones, zi, 1), 'btn-outline-secondary', { 'aria-label': 'Move zone down' })) : null;
+
+    const inner = el('div', { class: 'zone-body', hidden: folded },
       el('div', { class: 'd-flex flex-wrap gap-2 align-items-end mb-3' },
         el('div', { class: 'flex-grow-1' }, el('label', { class: 'form-label small mb-1' }, `Zone ${zi + 1} name`),
-          textInput(zone.name, (v) => { zone.name = v; }, { maxlength: '60', 'data-testid': 'zone-name-input', placeholder: 'e.g. Southside' })),
-        button('↑', () => move(state.zones, zi, -1), 'btn-outline-secondary', { 'aria-label': 'Move zone up' }),
-        button('↓', () => move(state.zones, zi, 1), 'btn-outline-secondary', { 'aria-label': 'Move zone down' }),
+          textInput(zone.name, (v) => { zone.name = v; titleText.textContent = `Zone ${zi + 1}${v.trim() ? `: ${v.trim()}` : ''}`; }, { maxlength: '60', 'data-testid': 'zone-name-input', placeholder: 'e.g. Southside' })),
+        ...(many ? [] : [
+          button('↑', () => move(state.zones, zi, -1), 'btn-outline-secondary', { 'aria-label': 'Move zone up' }),
+          button('↓', () => move(state.zones, zi, 1), 'btn-outline-secondary', { 'aria-label': 'Move zone down' })]),
         button('Copy zone', () => { state.zones.splice(zi + 1, 0, { ...structuredClone(zone), id: nextId('z', state.zones.map((x) => x.id)), name: `${zone.name} (copy)`.slice(0, 60) }); touch(); render(); }, 'btn-outline-secondary', { 'data-testid': 'zone-copy' }),
         button('Remove zone', () => {
           if (confirm(`Remove ${zone.name || 'this zone'} and its ${zone.questions.length} question(s)?`)) { state.zones.splice(zi, 1); touch(); render(); }
@@ -127,6 +157,7 @@ export async function mountContent(body, ctx) {
         button('Add question', () => add('string'), 'btn-outline-primary', { 'data-testid': 'add-question' }),
         button('Add photo challenge', () => add('photo'), 'btn-outline-primary', { 'data-testid': 'add-photo' })),
       el('p', { class: 'small text-muted mt-2 mb-0' }, 'A zone does not need a photo challenge.'));
+    return el('section', { class: 'editor-zone card card-body mb-3', 'data-testid': 'editor-zone', 'data-folded': String(folded) }, ...[header, inner].filter(Boolean));
   }
   const addZoneButton = () => button('Add zone', () => { state.zones.push(blankZone(state)); touch(); render(); }, 'btn-primary', { 'data-testid': 'add-zone' });
 
