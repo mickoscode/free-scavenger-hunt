@@ -44,7 +44,7 @@ The detailed security review (residual risks, cost-abuse economics, open items) 
 ## Addresses and the demo
 
 - A hunt's address is `/e/<organiser code>/<hunt>/`; API `/api/events/:org/:slug/...`. Every account has a 4 character code (`orgCodeFor` assigns one lazily to older accounts). Hunt names are unique per organiser, not globally. Never build a hunt address from a slug alone.
-- Every signup creates a `demo-hunt` (`api/demo/`): 6 zones, 53 questions, pictures in `api/demo/images/` (licences in `api/demo/credits.json`, shown in the demo's instructions). If you change the demo's questions keep the Code-breakers answers derived from the questions they refer to (`tests/api/demo.test.js` checks), and keep every image's licence and author in `credits.json`. `scripts/make-demo-logo.js` redraws the Code-breakers picture.
+- Every signup copies the hunt called `master-demo` in a site admin's account into the new organiser's account as `demo-hunt` (`api/demo/create.js`, copying through `api/lib/copy.js`). The master is an ordinary hunt: nothing is stored about it anywhere (no setting, no flag), it is found by looking through the site admins. No master means no demo; a failed copy is logged and cleaned up and never stops a signup. The original demo is kept only as data in `scripts/demo-master/` and put into master-demo by `scripts/seed-master-demo.js` (first setup and restore); the site never reads it. Do not add fallbacks, pointers or built-in demo content to the API: the owner wants this kept minimal.
 - Players must never be given a way out of a game by accident: no link to `/` on view/play/results pages (the browser tests check), and the landing page offers the last hunt back.
 
 ## Front page and About

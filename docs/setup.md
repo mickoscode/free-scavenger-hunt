@@ -54,3 +54,13 @@ Hunt addresses gained an organiser code (`/e/<code>/<hunt>/`), so hunts created 
 node scripts/reset-organisers.js          # lists what would be removed, changes nothing
 node scripts/reset-organisers.js --yes    # removes it
 ```
+
+## The master Demo Hunt (once, and to restore it)
+
+New organisers get a copy of the hunt called `master-demo` in the site admin's account as their Demo Hunt. The original demo is kept as data in `scripts/demo-master/`, and this command makes `master-demo` from it (or restores it), from a computer with AWS credentials:
+
+```sh
+node scripts/seed-master-demo.js                  # shows what it would do
+node scripts/seed-master-demo.js --yes            # creates master-demo (does nothing if it exists)
+node scripts/seed-master-demo.js --replace --yes  # throws the current one away and restores the original
+```

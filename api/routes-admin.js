@@ -9,6 +9,7 @@ import { decisionPercent, isDecision, photoPoints } from './lib/scoring.js';
 import { teamLabel } from './lib/teams.js';
 import { normaliseWhatsappUrl } from './lib/whatsapp.js';
 import { eventState, loadManagedEvent, orgCodeFor, requireUser } from './context.js';
+import { copyContent } from './lib/copy.js';
 import { fail, json } from './http.js';
 import { rankTeams } from './routes-public.js';
 
@@ -84,22 +85,8 @@ export function adminRoutes(router, ctx) {
     if (user.role !== 'site-admin' && (await store.listEventsByOwner(user.name)).length >= user.maxEvents) fail(409, 'event-limit');
     const copy = { ...event, id: randomId(10), slug, org: await orgCodeFor(ctx, user), owner: user.name, createdAt: ctx.now(), name: name.trim(), day: new Date(ctx.now()).toISOString().slice(0, 10), resultsPublished: false, uploadBytes: 0 };
     if (!(await store.createEvent(copy))) fail(409, 'slug-taken');
-    const zones = [];
-    for (const z of content.zones) {
-      let map = null;
-      if (z.map) {
-        const tag = randomId(8);
-        map = {};
-        for (const kind of ['thumb', 'full']) {
-          const from = z.map[kind].slice(1);
-          const to = `assets/${copy.id}/${z.id}-${tag}-${kind}.${from.split('.').pop()}`;
-          await assets.copy(from, to);
-          map[kind] = `/${to}`;
-        }
-      }
-      zones.push({ ...z, map });
-    }
-    await store.putContent(copy.id, { ...content, zones });
+    const copied = await copyContent(ctx, content, event.id, copy.id);
+    await store.putContent(copy.id, copied);
     return json(200, { id: copy.id, slug: copy.slug, org: copy.org });
   });
 
