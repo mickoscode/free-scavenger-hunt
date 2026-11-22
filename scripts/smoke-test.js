@@ -78,20 +78,21 @@ try {
     assert.match((await call('GET', '/api/auth/me')).text, new RegExp(user));
   });
   let id;
-  await check('a new organiser gets a code and a Demo Hunt with its pictures', async () => {
+  await check('a new organiser gets a code, and a Demo Hunt (a copy of the site admin\'s master-demo) when one is set up', async () => {
     const me = (await call('GET', '/api/auth/me')).json.user;
     assert.match(me.code, /^[a-z2-9]{4}$/);
     const events = (await call('GET', '/api/admin/events')).json.events;
     const demo = events.find((e) => e.slug === 'demo-hunt');
-    assert.ok(demo, 'the starter hunt exists');
+    if (!demo) { console.log('   (no master-demo is set up, so new organisers get no demo hunt)'); return; }
     assert.equal(demo.org, me.code);
-    assert.equal(demo.status, 'pre'); // opens 5 minutes after signup
     const detail = (await call('GET', `/api/admin/events/${demo.id}`)).json;
-    assert.equal(detail.content.zones.length, 6);
-    const image = await fetch(base + detail.content.zones[0].map.thumb);
-    assert.equal(image.status, 200);
-    assert.equal(image.headers.get('content-type'), 'image/jpeg'); // the S3 assets bucket is served through CloudFront
-    assert.equal((await call('GET', `/api/events/${me.code}/demo-hunt/info`)).json.name, 'Demo Hunt');
+    assert.ok(detail.content.zones.length >= 1);
+    for (const zone of detail.content.zones.filter((z) => z.map)) {
+      const image = await fetch(base + zone.map.thumb);
+      assert.equal(image.status, 200);
+      assert.match(image.headers.get('content-type'), /^image\//); // the S3 assets bucket is served through CloudFront
+    }
+    assert.equal((await call('GET', `/api/events/${me.code}/demo-hunt/info`)).json.slug, 'demo-hunt');
   });
   await check('an organiser can build a hunt', async () => {
     const created = await call('POST', '/api/admin/events', { slug, name: 'Smoke test hunt', timeZone: 'UTC' });

@@ -44,7 +44,8 @@ test('signed-in organiser pages fit a 360 px phone, and the sign out button is a
     await footerLayout(page, WIDTH);
     await h.shot(page, '60-phone-dashboard');
 
-    await page.click(`${tid('event-card')}[data-slug="demo-hunt"]`);
+    await page.fill(tid('new-name'), 'Phone Hunt');
+    await page.click(tid('create-button'));
     await page.waitForSelector(tid('event-title'));
     for (const tab of ['overview', 'settings', 'questions', 'teams', 'scoring']) {
       await page.click(tid(`tab-${tab}`));

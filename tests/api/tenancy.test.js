@@ -57,7 +57,7 @@ test('slugs are unique, validated, and an event limit applies per user', async (
   assert.equal((await ann.post('/api/admin/events', { slug: 'taken', name: 'x' })).status, 200);
   assert.equal((await ann.post('/api/admin/events', { slug: 'taken', name: 'x' })).body.error, 'slug-taken'); // within one organiser
   assert.equal((await bob.post('/api/admin/events', { slug: 'taken', name: 'x' })).status, 200); // another organiser may reuse the name
-  for (let i = 1; i < 3; i++) await ann.post('/api/admin/events', { slug: `event-${i}`, name: 'x' }); // the default limit is 3 hunts
+  for (let i = 1; i < 4; i++) await ann.post('/api/admin/events', { slug: `event-${i}`, name: 'x' }); // the default limit is 4 hunts (a demo hunt counts as one)
   assert.equal((await ann.post('/api/admin/events', { slug: 'one-too-many', name: 'x' })).body.error, 'event-limit');
   assert.equal((await ann.get('/api/admin/events')).body.canCreate, false);
 });
@@ -70,12 +70,12 @@ test('the site admin sees everything, manages users, and can act on any event', 
   const ann = await register(w, 'ann', 'secret-garden-walk-9');
   const ev = await createEvent(ann, { slug: 'anns-hunt' });
 
-  assert.deepEqual((await boss.get('/api/admin/events?all=1')).body.events.map((e) => e.slug).sort(), ['anns-hunt', 'demo-hunt']); // every hunt of every organiser
+  assert.deepEqual((await boss.get('/api/admin/events?all=1')).body.events.map((e) => e.slug), ['anns-hunt']); // every hunt of every organiser
   assert.equal((await boss.get(`/api/admin/events/${ev.id}`)).status, 200);
   assert.equal((await boss.put(`/api/admin/events/${ev.id}/config`, { name: 'Edited', timeZone: 'Australia/Perth', day: '2026-11-14', start: '09:00', end: '12:00', teamNames: true })).status, 200);
 
   const users = (await boss.get('/api/site/users')).body.users;
-  assert.deepEqual(users.map((u) => [u.name, u.eventCount]), [['ann', 2], ['siteadmin', 0]]); // her own hunt and the starter demo
+  assert.deepEqual(users.map((u) => [u.name, u.eventCount]), [['ann', 1], ['siteadmin', 0]]);
   assert.equal((await ann.get('/api/site/users')).body.error, 'not-allowed'); // event admins cannot
 
   // suspend: their session stops working at once and they cannot log in

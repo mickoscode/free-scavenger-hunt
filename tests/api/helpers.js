@@ -1,4 +1,5 @@
 // Test harness: an app on the in-memory store with a clock the test controls, and a client that keeps cookies.
+import assert from 'node:assert/strict';
 import { createApp } from '../../api/app.js';
 import { createMemoryAssets } from '../../api/assets.js';
 import { createMemoryStore } from '../../api/store/memory.js';
@@ -81,3 +82,23 @@ export async function createEvent(admin, { slug = 'beach-hunt', content = sample
 
 export const GAME_START = Date.UTC(2026, 10, 14, 1, 0, 0);
 export const GAME_END = Date.UTC(2026, 10, 14, 4, 0, 0);
+
+// A hunt called master-demo in the site admin's account (what new organisers get a copy of as their Demo Hunt), with a picture in each zone.
+const PNG = Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), Buffer.alloc(200)]).toString('base64');
+export async function createMaster(world, { zones = ['Zone One', 'Zone Two'], name = 'Demo Hunt', instructions = '# Welcome to the demo' } = {}) {
+  const { name: adminName, password } = await seedSiteAdmin(world);
+  const boss = client(world, '6.6.6.6');
+  assert.equal((await boss.post('/api/auth/login', { username: adminName, password })).status, 200);
+  const made = await boss.post('/api/admin/events', { slug: 'master-demo', name, timeZone: 'UTC' });
+  assert.equal(made.status, 200, JSON.stringify(made.body));
+  const content = { instructions, zones: [] };
+  for (const [i, zoneName] of zones.entries()) {
+    const map = (await boss.post(`/api/admin/events/${made.body.id}/zones/z${i + 1}/map`, { thumb: PNG, full: PNG })).body.map;
+    content.zones.push({ id: `z${i + 1}`, name: zoneName, map, questions: [
+      { id: 'q1', type: 'whole-number', text: `Question in ${zoneName}: two plus two?`, answers: ['4'], score: 5 },
+      { id: 'q2', type: 'string', text: `Which city is the capital of Western Australia? (${zoneName})`, answers: ['perth'], score: 5 },
+    ] });
+  }
+  assert.equal((await boss.put(`/api/admin/events/${made.body.id}/content`, content)).status, 200);
+  return { boss, id: made.body.id, content, org: made.body.org };
+}
