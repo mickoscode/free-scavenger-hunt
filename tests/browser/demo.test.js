@@ -20,6 +20,15 @@ test('a new organiser finds a Demo Hunt that opens in 5 minutes, and players can
     assert.match(await a.textContent(card), /Demo Hunt/);
     assert.match(await a.textContent(card), /\/e\/[a-z2-9]{4}\/demo-hunt\//);
     assert.match(await a.textContent('#new-prefix'), /^\/e\/[a-z2-9]{4}\/$/); // the organiser's code in front of any new hunt name
+    // the create form's examples are obviously examples (and generic), with plain help under each field
+    const name = await a.getAttribute(tid('new-name'), 'placeholder');
+    const address = await a.getAttribute(tid('new-slug'), 'placeholder');
+    assert.match(name, /^e\.g\. /);
+    assert.match(address, /^e\.g\. /);
+    assert.doesNotMatch(`${name} ${address}`, /sorrento|youth|surf/i);
+    const help = (await a.textContent('#create-form')).replace(/\s+/g, ' ');
+    assert.ok(help.includes('The grey text is only an example: type your own name.'));
+    assert.ok(help.includes("It can't be changed later."));
     await h.shot(a, '40-dashboard-with-demo');
     await a.click(card);
     await a.waitForSelector(tid('event-title'));
