@@ -2,12 +2,17 @@
 //   node scripts/security-probe.js https://xxxx.cloudfront.net [https://<api-id>.execute-api.<region>.amazonaws.com]
 // The second address is the raw API Gateway address (see the Terraform output or the build logs): it must refuse everything.
 import assert from 'node:assert/strict';
+import https from 'node:https';
 
 const site = (process.argv[2] ?? '').replace(/\/+$/, '');
 const direct = (process.argv[3] ?? '').replace(/\/+$/, '');
 if (!site) { console.error('usage: node scripts/security-probe.js <site url> [raw api url]'); process.exit(2); }
 
 const get = (url, init) => fetch(url, { redirect: 'manual', ...init });
+// fetch() rewrites paths like /a/%2e%2e/b before sending; this sends the path exactly as written.
+const raw = (path) => new Promise((resolve, reject) => {
+  https.get({ host: new URL(site).host, path }, (res) => { res.resume(); resolve(res.statusCode); }).on('error', reject);
+});
 let n = 0;
 const check = async (name, fn) => { await fn(); console.log(`ok ${++n} - ${name}`); };
 
@@ -36,7 +41,10 @@ await check('state-changing calls need JSON (no cross-site form posts) and sends
   assert.equal(pre.headers.get('access-control-allow-origin'), null);
 });
 await check('traversal and malformed paths are refused', async () => {
-  for (const p of ['/assets/%2e%2e/%2e%2e/etc/passwd', '/api/events/%ZZ', '/api/%00', '/e/%2e%2e%2fadmin/']) assert.ok([400, 404].includes((await get(site + p)).status), p);
+  for (const p of ['/assets/%2e%2e/%2e%2e/etc/passwd', '/assets/../../etc/passwd', '/api/events/%ZZ', '/api/%00', '/e/%2e%2e%2fadmin/', '/api/events/..%2f..%2fadmin']) {
+    const status = await raw(p);
+    assert.ok([400, 404].includes(status), `${p} -> ${status}`);
+  }
 });
 await check('error responses reveal nothing about the stack', async () => {
   const r = await get(site + '/api/nope');
