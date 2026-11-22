@@ -60,3 +60,48 @@ test('the front page keeps its original wording, is inviting, and leads to About
     await h.close();
   }
 });
+
+test('the organiser page leads home and to About when signed out, keeps its footer when signed in, and fits a phone', async () => {
+  const h = await launch();
+  try {
+    for (const [label, open] of [['phone', h.phone], ['desktop', h.desktop]]) {
+      const { page } = await open(label);
+      await page.goto(h.url('/admin/'));
+      await page.waitForSelector(tid('login-button'));
+      assert.equal(await page.locator(tid('public-header')).isVisible(), true);
+      assert.equal(await page.getAttribute(tid('brand-home'), 'href'), '/');
+      assert.equal(await page.getAttribute(tid('nav-about'), 'href'), '/about/');
+      assert.equal(await page.getAttribute(tid('back-home'), 'href'), '/');
+      assert.equal(await page.getAttribute(tid('about-from-signin'), 'href'), '/about/');
+      assert.equal(await page.getAttribute(tid('playing-home'), 'href'), '/');
+      assert.equal(await page.getAttribute(tid('footer-home'), 'href'), '/');
+      assert.equal(await page.getAttribute(tid('footer-about'), 'href'), '/about/');
+      assert.equal(await page.locator('.perks li').count(), 3);
+      assert.equal(await noSideScroll(page), true, `${label}: sign in page sideways scrolling`);
+      await h.shot(page, `52-organiser-signin-${label}`);
+      // the links really go there
+      await page.click(tid('back-home'));
+      await page.waitForURL((u) => u.pathname === '/');
+      await page.goto(h.url('/admin/'));
+      await page.click(tid('about-from-signin'));
+      await page.waitForURL(/\/about\/$/);
+    }
+    // signed in: the public header gives way to the organiser bar, and the footer stays (Home and About)
+    const { page } = await h.desktop('signed-in');
+    await page.goto(h.url('/admin/'));
+    await page.fill(tid('reg-user'), 'frank');
+    await page.fill(tid('reg-pass'), 'purple-giraffe-lunch-42');
+    await page.click(tid('register-button'));
+    await page.check(tid('codes-saved'));
+    await page.click(tid('codes-continue'));
+    await page.waitForSelector(tid('create-button'));
+    assert.equal(await page.locator(tid('public-header')).isVisible(), false);
+    assert.equal(await page.locator(tid('nav-user')).isVisible(), true);
+    assert.equal(await page.getAttribute(tid('footer-home'), 'href'), '/');
+    assert.equal(await page.getAttribute(tid('footer-about'), 'href'), '/about/');
+    await h.shot(page, '53-organiser-dashboard');
+    assert.deepEqual(h.errors, []);
+  } finally {
+    await h.close();
+  }
+});

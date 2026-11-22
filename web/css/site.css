@@ -135,3 +135,13 @@ body.home { background: #fffdf8; }
   .site-header-inner { gap: .5rem; }
   .home-hero { padding-top: 1.5rem; }
 }
+
+/* ---- the organiser sign in / create account page ---- */
+.auth-hero { padding: 1.75rem 0 2.25rem; }
+.auth-body { padding-top: 1.5rem; padding-bottom: 3rem; }
+.auth-card { border-radius: 1rem; border-width: 1px; box-shadow: 0 4px 14px rgba(0, 0, 0, .08); }
+.auth-signin { border-top: 5px solid var(--fsh-blue); }
+.auth-create { border-top: 5px solid #12b886; }
+.perks { list-style: none; padding: 0; margin: 0 0 1rem; display: grid; gap: .35rem; font-size: .95rem; }
+.perks li { background: #f3fcf8; border-radius: .6rem; padding: .35rem .6rem; }
+@media (max-width: 575px) { .auth-hero .float { display: none; } }

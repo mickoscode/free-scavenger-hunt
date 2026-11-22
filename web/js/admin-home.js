@@ -66,6 +66,7 @@ async function showDashboard(user) {
 }
 
 const { user, registrationOpen } = await loadSession();
+$('#public-header').hidden = Boolean(user); // signed-out visitors get the public header (Home, About); organisers get their own bar
 if (user) await showDashboard(user);
 else {
   show('#auth', true);
