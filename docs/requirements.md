@@ -34,6 +34,7 @@ Everything an organiser needs is **inside the site**: no files to upload from an
 ## Organiser features
 
 - **Account**: register with a username (3 to 30 letters, numbers, `-`, `_`) and a password (10+ characters). Change password; delete account (removes your hunts).
+- **Recovery without anyone's help**: registration gives 8 one-time recovery codes (20 characters, about 99 bits each), shown once with copy, download and print; the organiser must tick that they saved them. Forgotten password: *Forgot your password?* on the sign in page, then username + one code + a new password. A used code is gone, every session of the account ends, the new password signs in, and the account shows a notice ("a recovery code was used") until dismissed. Codes can be remade any time with the password (the old set stops working); the dashboard warns when 2 or fewer are left. No email or any personal data is involved.
 - **Dashboard**: list of your hunts, create one (name, address, time zone).
 - **Overview**: share link and QR code, checklist, use as template (copy settings, questions, instructions and maps to a new hunt), delete player data (type `delete`), delete hunt (type its address).
 - **Settings**: name, time zone (any), day, start, end, team names on/off, join code, WhatsApp link. Locked while the game is active (type `override` to change anyway).
@@ -51,11 +52,12 @@ Users table (hunt count and limit, suspend / activate, reset password to a one-t
 
 ## Security model
 
-- Passwords: scrypt. Admin sessions: random token, only its hash stored, 12 hours, cookie `HttpOnly; Secure; SameSite=Strict`, ended by password change, reset or suspension. All state-changing API calls require `application/json`.
+- Passwords: scrypt. Recovery codes: random, 99 bits, only a hash bound to the username is stored (a database copy yields nothing usable), compared in constant time without early exit, 5 attempts per account per hour and 15 per address per hour, refused for suspended accounts, identical errors for wrong code and unknown account.
+- Privacy: no email, name or any personal data is stored. Rate limit counters are keyed by a hash of the address and expire within two hours. The site admin can reset a password (a one-time temporary password) but cannot see passwords or codes, and the owner is shown an "admin reset" notice on their next visit. Admin sessions: random token, only its hash stored, 12 hours, cookie `HttpOnly; Secure; SameSite=Strict`, ended by password change, reset or suspension. All state-changing API calls require `application/json`.
 - Tenancy: every admin route resolves the hunt through its owner; another organiser's hunt looks exactly like a missing one (`no-event`). Team sessions are per hunt.
 - Answers never leave the server before publication. The content security policy allows only the site's own files; page code builds the DOM with `textContent`.
 - API errors avoid 403 and 404 (CloudFront replaces them with the site's 404 page): 400 unknown/invalid, 401 not signed in, 409 wrong state, 429 rate limited.
 
 ## Parked
 
-Email verification and password recovery by email (the site admin resets passwords), custom domain, download of results, CSV export, translations.
+Recovery by email (needs a sending domain and AWS email production access, and would store an address; the codes cover it without), custom domain, download of results, CSV export, translations.

@@ -34,3 +34,23 @@ export const randomId = (length = 10) => Array.from(crypto.randomBytes(length), 
 
 // A readable temporary password (no look-alike characters).
 export const temporaryPassword = () => `${randomId(5)}-${randomId(5)}-${randomId(5)}`;
+
+// ---- recovery codes: one-time codes an organiser keeps to get back in if the password is forgotten.
+// 20 characters from a 31 symbol alphabet without look-alikes (about 99 bits), shown as XXXXX-XXXXX-XXXXX-XXXXX. Only a
+// hash is stored, so neither the site admin nor a copy of the database reveals a usable code.
+const CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+export const RECOVERY_CODE_COUNT = 8;
+
+export function recoveryCode() {
+  const chars = Array.from({ length: 20 }, () => CODE_ALPHABET[crypto.randomInt(CODE_ALPHABET.length)]).join('');
+  return chars.match(/.{5}/g).join('-');
+}
+export const normaliseRecoveryCode = (s) => String(s ?? '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+// Bound to the username, so a code cannot be moved to another account.
+export const hashRecoveryCode = (username, code) => sha256(`recovery:${username}:${normaliseRecoveryCode(code)}`);
+
+// -> { codes: [...plain, shown once], hashes: [...stored] }
+export function newRecoverySet(username) {
+  const codes = Array.from({ length: RECOVERY_CODE_COUNT }, recoveryCode);
+  return { codes, hashes: codes.map((c) => hashRecoveryCode(username, c)) };
+}

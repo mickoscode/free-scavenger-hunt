@@ -2,6 +2,7 @@
 import { requireSiteAdmin } from './context.js';
 import { fail, json } from './http.js';
 import { hashPassword, temporaryPassword } from './lib/passwords.js';
+import { addNotice } from './routes-auth.js';
 
 const publicUser = (u, eventCount) => ({ name: u.name, role: u.role, status: u.status, maxEvents: u.maxEvents, createdAt: u.createdAt, eventCount });
 
@@ -38,7 +39,8 @@ export function siteRoutes(router, ctx) {
   router.post('/api/site/users/:name/reset-password', async (req) => {
     const user = await loadUser(req);
     const password = temporaryPassword();
-    await store.putUser({ ...user, passwordHash: await hashPassword(password), sessionGen: (user.sessionGen ?? 0) + 1 });
+    // The owner is told on their next visit, so a reset can never go unnoticed.
+    await store.putUser({ ...user, passwordHash: await hashPassword(password), sessionGen: (user.sessionGen ?? 0) + 1, notices: addNotice(user, 'admin-reset', ctx.now()) });
     return json(200, { password });
   });
 

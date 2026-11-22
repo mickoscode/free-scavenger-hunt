@@ -33,6 +33,7 @@ export const ERRORS = {
   'invalid-login': 'That username and password do not match.',
   'invalid-username': 'Usernames are 3 to 30 letters, numbers, - or _.',
   'invalid-password': 'Passwords need at least 10 characters.',
+  'invalid-recovery': 'That username and recovery code do not match, or the code has already been used.',
   'username-taken': 'That username is taken.',
   'registration-closed': 'New accounts are closed at the moment.',
   'too-many-requests': 'Too many tries. Please wait a little and try again.',

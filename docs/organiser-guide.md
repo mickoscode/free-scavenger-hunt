@@ -1,6 +1,6 @@
 # Organiser guide
 
-1. **Create an account** at `/admin/` (a username and a password of 10+ characters; there is no email, so keep the password safe).
+1. **Create an account** at `/admin/` (a username and a password of 10+ characters; there is no email). You are then shown **8 recovery codes, once**: save them in a password manager or print them. If you forget your password, choose *Forgot your password?* on the sign in page and enter your username, one code and a new password. Each code works once; make new ones from your dashboard any time.
 2. **Create a hunt**: a name, an address (what players will type or scan) and your time zone.
 3. **Questions tab**: add zones (areas of your venue). Give each a name and, if you like, a map image. Add questions (text, whole number, decimal) with the answer and points, and photo challenges (teams send a photo to your WhatsApp group). Write instructions for players. Save.
 4. **Settings tab**: the day, start and end times, whether teams choose names, an optional join code to tell players in person, and your WhatsApp group's invite link. Save.

@@ -1,12 +1,23 @@
-// Accounts: registration, login, logout, password. Usernames, no email: nothing personal is stored.
-import { ADMIN_COOKIE, clientIp, cookiesOf, currentUser, requireUser, startAdminSession } from './context.js';
+// Accounts: registration, login, logout, password, recovery codes. Usernames, no email: nothing personal is stored.
+//
+// Recovery without anybody's help (and without personal data): at registration an organiser gets 8 one-time recovery
+// codes, shown once. Only hashes are stored. Forgetting the password, they sign in again with username + a code and
+// choose a new password. Using a code ends every session and leaves a notice on the account.
+import { ADMIN_COOKIE, clientKey, cookiesOf, currentUser, requireUser, startAdminSession } from './context.js';
 import { cookie, fail, json } from './http.js';
-import { hashPassword, sha256, verifyPassword } from './lib/passwords.js';
+import { hashPassword, hashRecoveryCode, newRecoverySet, safeEqual, sha256, verifyPassword } from './lib/passwords.js';
 import { isBlocked } from './lib/teams.js';
 
 const USERNAME = /^[a-z0-9][a-z0-9_-]{2,29}$/;
 export const DEFAULT_MAX_EVENTS = 5;
-const publicUser = (u) => ({ name: u.name, role: u.role, maxEvents: u.maxEvents });
+const MAX_NOTICES = 5;
+
+// What a signed in user may know about their own account. Never the hashes.
+const publicUser = (u) => ({
+  name: u.name, role: u.role, maxEvents: u.maxEvents,
+  recoveryCodesLeft: (u.recovery ?? []).length, notices: u.notices ?? [],
+});
+export const addNotice = (user, type, at) => [...(user.notices ?? []), { type, at }].slice(-MAX_NOTICES);
 
 // A fixed hash to compare against when the user does not exist, so the time taken does not reveal which names exist.
 const dummyHash = hashPassword('not-a-real-password');
@@ -21,13 +32,14 @@ export function authRoutes(router, ctx) {
     const name = typeof username === 'string' ? username.trim().toLowerCase() : '';
     if (!USERNAME.test(name) || isBlocked(name)) fail(400, 'invalid-username');
     if (typeof password !== 'string' || password.length < 10 || password.length > 200) fail(400, 'invalid-password');
-    if ((await store.bumpRate(`reg-ip#${clientIp(req)}`, 3600)) > 5 || (await store.bumpRate('reg-all', 3600)) > 60) fail(429, 'too-many-requests');
+    if ((await store.bumpRate(`reg-ip#${clientKey(req)}`, 3600)) > 5 || (await store.bumpRate('reg-all', 3600)) > 60) fail(429, 'too-many-requests');
+    const recovery = newRecoverySet(name);
     const user = {
       name, role: 'event-admin', status: 'active', maxEvents: DEFAULT_MAX_EVENTS, sessionGen: 0,
-      passwordHash: await hashPassword(password), createdAt: ctx.now(),
+      passwordHash: await hashPassword(password), recovery: recovery.hashes, notices: [], createdAt: ctx.now(),
     };
     if (!(await store.createUser(user))) fail(409, 'username-taken');
-    return json(200, { user: publicUser(user) }, { cookies: [await startAdminSession(ctx, user)] });
+    return json(200, { user: publicUser(user), recoveryCodes: recovery.codes }, { cookies: [await startAdminSession(ctx, user)] });
   });
 
   router.post('/api/auth/login', async (req) => {
@@ -40,6 +52,48 @@ export function authRoutes(router, ctx) {
     if (!user || !ok) fail(400, 'invalid-login');
     if (user.status !== 'active') fail(409, 'account-suspended');
     return json(200, { user: publicUser(user) }, { cookies: [await startAdminSession(ctx, user)] });
+  });
+
+  // Forgot the password: username + one recovery code + a new password. The code is used up, every session ends, the account
+  // gets a notice the owner sees on the next visit. Guessing is hopeless (about 99 bits) and rate limited anyway.
+  router.post('/api/auth/recover', async (req) => {
+    const { username, code, next } = req.body ?? {};
+    const name = typeof username === 'string' ? username.trim().toLowerCase() : '';
+    if (!USERNAME.test(name) || typeof code !== 'string' || code.length > 60) fail(400, 'invalid-recovery');
+    if (typeof next !== 'string' || next.length < 10 || next.length > 200) fail(400, 'invalid-password');
+    if ((await store.bumpRate(`recover#${name}`, 3600)) > 5 || (await store.bumpRate(`recover-ip#${clientKey(req)}`, 3600)) > 15) fail(429, 'too-many-requests');
+    const user = await store.getUser(name);
+    // Compare against every stored hash, whatever matches (no early exit), so timing says nothing.
+    const given = hashRecoveryCode(name, code);
+    let matched = -1;
+    (user?.recovery ?? []).forEach((h, i) => { if (safeEqual(h, given)) matched = i; });
+    if (!user || matched === -1) fail(400, 'invalid-recovery');
+    if (user.status !== 'active') fail(409, 'account-suspended');
+    const updated = {
+      ...user,
+      passwordHash: await hashPassword(next),
+      recovery: user.recovery.filter((_, i) => i !== matched),
+      sessionGen: (user.sessionGen ?? 0) + 1,
+      notices: addNotice(user, 'recovery-used', ctx.now()),
+    };
+    await store.putUser(updated);
+    return json(200, { user: publicUser(updated) }, { cookies: [await startAdminSession(ctx, updated)] });
+  });
+
+  // A fresh set of codes (the old ones stop working). Needs the password again. The new codes are shown once.
+  router.post('/api/auth/recovery-codes', async (req) => {
+    const user = await requireUser(ctx, req);
+    if (typeof req.body?.password !== 'string' || !(await verifyPassword(req.body.password, user.passwordHash))) fail(400, 'invalid-login');
+    if ((await store.bumpRate(`recovery-codes#${user.name}`, 3600)) > 5) fail(429, 'too-many-requests');
+    const recovery = newRecoverySet(user.name);
+    await store.putUser({ ...user, recovery: recovery.hashes });
+    return json(200, { recoveryCodes: recovery.codes });
+  });
+
+  router.post('/api/auth/notices/dismiss', async (req) => {
+    const user = await requireUser(ctx, req);
+    await store.putUser({ ...user, notices: [] });
+    return json(200, { ok: true });
   });
 
   router.post('/api/auth/logout', async (req) => {
