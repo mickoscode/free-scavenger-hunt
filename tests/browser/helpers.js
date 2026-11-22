@@ -17,8 +17,8 @@ export async function launch() {
     page.on('pageerror', (e) => errors.push(`${label}: ${e.message}`));
     page.on('console', (m) => { if (m.type() === 'error' && !/status of (401|400|409|429)/.test(m.text())) errors.push(`${label}: ${m.text()}`); });
   };
-  const phone = async (label) => {
-    const ctx = await browser.newContext({ viewport: { width: 390, height: 800 }, isMobile: true, hasTouch: true });
+  const phone = async (label, width = 390) => {
+    const ctx = await browser.newContext({ viewport: { width, height: 800 }, isMobile: true, hasTouch: true });
     const page = await ctx.newPage();
     watch(page, label);
     return { ctx, page };
