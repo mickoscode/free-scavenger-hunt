@@ -230,3 +230,19 @@ test('one hunt can only ever take 60 MB of uploaded pictures, and a copy starts 
   const copy = (await ann.post(`/api/admin/events/${ev.id}/duplicate`, { slug: 'fresh-copy', name: 'Fresh' })).body;
   assert.equal((await w.store.getEvent(copy.id)).uploadBytes, 0);
 });
+
+test('every API response, errors included, carries the security headers (CloudFront adds none to errors)', async () => {
+  const w = createWorld();
+  const anon = client(w);
+  for (const [method, path, body] of [['GET', '/api/auth/me'], ['GET', '/api/events/none/info'], ['GET', '/api/admin/events'], ['POST', '/api/auth/login', {}], ['GET', '/api/nope'], ['DELETE', '/api/auth/me']]) {
+    const res = await anon.call(method, path, body);
+    const h = res.headers;
+    assert.equal(h['x-content-type-options'], 'nosniff', `${method} ${path} ${res.status}`);
+    assert.equal(h['content-security-policy'], "default-src 'none'; frame-ancestors 'none'", `${method} ${path}`);
+    assert.equal(h['x-frame-options'], 'DENY', `${method} ${path}`);
+    assert.match(h['strict-transport-security'], /max-age=\d{7,}/, `${method} ${path}`);
+  }
+  // also the failure that never reaches a route (malformed escape) and a request refused for not coming through CloudFront
+  const bad = await w.handle({ method: 'GET', path: '/api/events/%ZZ', query: {}, headers: {}, ip: '1.1.1.1' });
+  assert.equal(bad.headers['x-frame-options'], 'DENY');
+});

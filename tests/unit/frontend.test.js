@@ -81,3 +81,11 @@ test('the editor model: ids, blank items and readable problems', async () => {
   assert.equal(m.describeProblem('zones.0.questions.1.answers', content), 'Zone 1, question 2 needs a valid answer.');
   assert.equal(m.describeProblem('zones.0.name', content), 'Zone 1 (Beach) needs a name.');
 });
+
+test('the 404 page carries its own content security policy (CloudFront adds headers to successful responses only)', () => {
+  const html = readFileSync(path.join(dist, '404.html'), 'utf8');
+  const policy = /<meta http-equiv="Content-Security-Policy" content="([^"]+)"/.exec(html)?.[1] ?? '';
+  assert.match(policy, /default-src 'none'/);
+  assert.doesNotMatch(policy, /script-src|unsafe/); // no scripts at all
+  assert.doesNotMatch(html, /<script/i);
+});
