@@ -60,8 +60,11 @@ export function createDynamoStore({ tableName, endpoint, now = Date.now, client 
   }
 
   const eventItem = (ev) => ({ PK: `E#${ev.id}`, SK: 'META', gsi1pk: 'EVENTS', gsi1sk: `${ev.owner}#${ev.id}`, ...ev });
+  // An empty prefix means "everything under this key": DynamoDB rejects begins_with with an empty string.
   const byGsi = async (pk, prefix) => queryAll({
-    IndexName: 'gsi1', KeyConditionExpression: 'gsi1pk = :pk AND begins_with(gsi1sk, :p)', ExpressionAttributeValues: { ':pk': pk, ':p': prefix },
+    IndexName: 'gsi1',
+    KeyConditionExpression: prefix ? 'gsi1pk = :pk AND begins_with(gsi1sk, :p)' : 'gsi1pk = :pk',
+    ExpressionAttributeValues: prefix ? { ':pk': pk, ':p': prefix } : { ':pk': pk },
   });
 
   return {

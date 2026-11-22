@@ -1,8 +1,8 @@
 # Accepted Trivy findings. Each entry needs a reason; remove it if the design changes.
 misconfigurations:
   - id: AWS-0132
-    paths: [site.tf, bootstrap/state.tf]
-    statement: Site content is public and state is protected by IAM; SSE-S3 (AES256) is sufficient and a customer-managed key would only add cost.
+    paths: [site.tf, assets.tf, bootstrap/state.tf]
+    statement: Site content and map images are public and state is protected by IAM; SSE-S3 (AES256) is sufficient and a customer-managed key would only add cost.
   - id: AWS-0011
     paths: [site.tf]
     statement: No WAF by design (cost); the static site has no sensitive endpoints.
