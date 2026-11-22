@@ -44,3 +44,8 @@ See `README.md` (layout, workflows) and `docs/setup.md` (wiring).
 - A hunt's address is `/e/<organiser code>/<hunt>/`; API `/api/events/:org/:slug/...`. Every account has a 4 character code (`orgCodeFor` assigns one lazily to older accounts). Hunt names are unique per organiser, not globally. Never build a hunt address from a slug alone.
 - Every signup creates a `demo-hunt` (`api/demo/`): 6 zones, 53 questions, pictures in `api/demo/images/` (licences in `api/demo/credits.json`, shown in the demo's instructions). If you change the demo's questions keep the Code-breakers answers derived from the questions they refer to (`tests/api/demo.test.js` checks), and keep every image's licence and author in `credits.json`. `scripts/make-demo-logo.js` redraws the Code-breakers picture.
 - Players must never be given a way out of a game by accident: no link to `/` on view/play/results pages (the browser tests check), and the landing page offers the last hunt back.
+
+## Front page and About
+
+- `web/index.html` keeps the owner's original wording (pitch, joining box, three steps): decorate around it, never rewrite it. `web/about/index.html` is the owner's personal story in their voice: do not invent biography, and keep every privacy/cost claim true (verified 2026-11-22: CloudFront, API Gateway and WAF logging are off; the Lambda logs only timing lines).
+- Pages may link out only with `rel="noopener"`; nothing they load may come from another origin (`tests/unit/frontend.test.js`).

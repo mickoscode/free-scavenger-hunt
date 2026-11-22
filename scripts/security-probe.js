@@ -17,7 +17,7 @@ let n = 0;
 const check = async (name, fn) => { await fn(); console.log(`ok ${++n} - ${name}`); };
 
 await check('security headers on successful pages and API responses (added by the CloudFront function)', async () => {
-  for (const path of ['/', '/admin/', '/e/abcd/some-hunt/', '/api/auth/me']) {
+  for (const path of ['/', '/about/', '/admin/', '/e/abcd/some-hunt/', '/api/auth/me']) {
     const r = await get(site + path);
     const h = r.headers;
     assert.match(h.get('content-security-policy') ?? '', /default-src 'none'.*script-src 'self'.*frame-ancestors 'none'/, `${path} CSP`);

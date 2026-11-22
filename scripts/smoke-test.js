@@ -38,6 +38,10 @@ await check('home page is served with security headers', () => retry(async () =>
 await check('hunt and admin addresses are rewritten to their pages', async () => {
   assert.match((await call('GET', '/e/zzzz/smoke-no-such-hunt/')).text, /data-testid="view-page"/);
   assert.match((await call('GET', '/admin/')).text, /Organiser sign in/);
+  const about = await call('GET', '/about/');
+  assert.equal(about.status, 200);
+  assert.match(about.text, /About Free Scavenger Hunt/);
+  assert.equal((await call('GET', '/about')).status, 301);
   assert.equal((await call('GET', '/e/zzzz/smoke-no-such-hunt')).status, 301);
   assert.equal((await call('GET', '/definitely-not-a-page.html')).status, 404);
 });
