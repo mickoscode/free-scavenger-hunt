@@ -74,3 +74,8 @@ export function passwordProblem(password, username = '') {
 export const RESERVED_USERNAMES = ['admin', 'administrator', 'root', 'support', 'help', 'security', 'staff', 'moderator', 'siteadmin', 'site-admin', 'owner',
   'system', 'official', 'scavenger', 'scavengerhunt', 'free-scavenger-hunt', 'webmaster', 'postmaster', 'noreply'];
 export const isReservedUsername = (name) => RESERVED_USERNAMES.includes(name.replace(/[-_]/g, '')) || RESERVED_USERNAMES.includes(name);
+
+// ---- organiser codes: 4 characters, no look-alikes (0/o, 1/l/i), assigned to every account. They are the first part of every
+// hunt address (/e/<code>/<hunt>/), so two organisers can both call a hunt "beach-hunt".
+export const orgCode = () => Array.from({ length: 4 }, () => ID_ALPHABET[crypto.randomInt(ID_ALPHABET.length)]).join('');
+export const isOrgCode = (s) => typeof s === 'string' && /^[abcdefghjkmnpqrstuvwxyz23456789]{4}$/.test(s);

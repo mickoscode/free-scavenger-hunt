@@ -45,3 +45,12 @@ If the app needs a new AWS service (for example Cognito or SES), add its permiss
 ## Custom domain
 
 Not yet configured: the site is served from the `site_url` output (a `*.cloudfront.net` address).
+
+## Resetting organiser data (once, when addresses changed shape)
+
+Hunt addresses gained an organiser code (`/e/<code>/<hunt>/`), so hunts created before that cannot be reached. To clear old test organisers, hunts and pictures (the site admin is never touched), from a computer with AWS credentials:
+
+```sh
+node scripts/reset-organisers.js          # lists what would be removed, changes nothing
+node scripts/reset-organisers.js --yes    # removes it
+```

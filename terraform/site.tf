@@ -152,7 +152,7 @@ resource "aws_cloudfront_distribution" "site" {
   # (Cache-Control: s-maxage=3), with no cookies in the cache key: any number of viewers cost the API one request per few
   # seconds per hunt. They are the only API paths that are ever cached, and the API never puts anything personal in them.
   dynamic "ordered_cache_behavior" {
-    for_each = ["/api/events/*/info", "/api/events/*/scoreboard"]
+    for_each = ["/api/events/*/*/info", "/api/events/*/*/scoreboard"]
 
     content {
       path_pattern           = ordered_cache_behavior.value

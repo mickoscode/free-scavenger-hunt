@@ -5,17 +5,17 @@ JSON over HTTPS under `/api/`. Errors are `{ "error": "<code>" }`. Statuses: 200
 ## Accounts (`routes-auth.js`)
 `POST /api/auth/register {username,password}` (also returns `recoveryCodes`, once) · `POST /api/auth/login` · `POST /api/auth/recover {username,code,next}` · `POST /api/auth/recovery-codes {password}` (new set, shown once) · `POST /api/auth/notices/dismiss` · `POST /api/auth/logout` · `GET /api/auth/me` (`{user, registrationOpen}`) · `POST /api/auth/password {current,next}` · `POST /api/auth/delete {password}`
 
-## Players (`routes-public.js`), `:slug` is the hunt's address
+## Players (`routes-public.js`), `:org` is the organiser's 4 character code and `:slug` the hunt name (`/e/:org/:slug/` on the site)
 | Route | Notes |
 |---|---|
-| `GET /api/events/:slug/info` (also at the bare `/api/events/:slug`) | name, status, `startMs`/`endMs`/`serverNowMs`, `teamNames`, `joinCodeRequired`, `resultsPublished`. Cacheable 3 s |
-| `GET /api/events/:slug/scoreboard` | `{teams:[{rank,name,done,score,number?}], questionTotal, resultsPublished}`. `number` only once published. Cacheable 3 s |
-| `POST /api/events/:slug/join {name,code}` | sets the team cookie. `wrong-code`, `name-taken`, `invalid-name`, `not-joinable`, `event-full` |
-| `GET /api/events/:slug/me` | team session: number, name, `done:{answers,photos}`, `whatsappUrl` |
-| `GET /api/events/:slug/play` | team session: `instructions`; `zones` (questions without answers) only while active |
-| `POST /api/events/:slug/answer {zone,question,answer}` · `POST .../photo {zone,question}` | `already-submitted`, `invalid-answer`, `not-playing`, `no-question` |
-| `GET /api/events/:slug/results` | team session: `{published:false}` or the full breakdown |
-| `GET /api/events/:slug/results/team/:n` | public summary without answers once published |
+| `GET /api/events/:org/:slug/info` | name, status, `startMs`/`endMs`/`serverNowMs`, `teamNames`, `joinCodeRequired`, `resultsPublished`. Cacheable 3 s |
+| `GET /api/events/:org/:slug/scoreboard` | `{teams:[{rank,name,done,score,number?}], questionTotal, resultsPublished}`. `number` only once published. Cacheable 3 s |
+| `POST /api/events/:org/:slug/join {name,code}` | sets the team cookie. `wrong-code`, `name-taken`, `invalid-name`, `not-joinable`, `event-full` |
+| `GET /api/events/:org/:slug/me` | team session: number, name, `done:{answers,photos}`, `whatsappUrl` |
+| `GET /api/events/:org/:slug/play` | team session: `instructions`; `zones` (questions without answers) only while active |
+| `POST /api/events/:org/:slug/answer {zone,question,answer}` · `POST .../photo {zone,question}` | `already-submitted`, `invalid-answer`, `not-playing`, `no-question` |
+| `GET /api/events/:org/:slug/results` | team session: `{published:false}` or the full breakdown |
+| `GET /api/events/:org/:slug/results/team/:n` | public summary without answers once published |
 
 ## Organisers (`routes-admin.js`), `:id` is the hunt's id
 `GET|POST /api/admin/events` · `GET|DELETE /api/admin/events/:id` · `PUT .../config` · `PUT .../content` · `POST .../zones/:zone/map {thumb,full}` (base64) · `POST .../duplicate {slug,name}` · `GET .../teams` · `DELETE .../teams/:n` · `GET .../teams/:n/results` · `GET .../photos` · `POST .../photos/score {team,zone,question,decision}` · `POST .../publish {confirm:true}` · `POST .../unpublish` · `POST .../player-data/delete {confirm:"delete", override?}`

@@ -53,9 +53,9 @@ test('organisers cannot use the site admin routes', async () => {
 test('every route that needs a team session refuses a visitor without one', async () => {
   const w = createWorld(GAME_START + 1000);
   const ann = await register(w, 'ann');
-  await createEvent(ann);
+  const ev = await createEvent(ann);
   const anon = client(w);
-  for (const [method, path] of [['GET', '/api/events/beach-hunt/me'], ['GET', '/api/events/beach-hunt/play'], ['POST', '/api/events/beach-hunt/answer'], ['POST', '/api/events/beach-hunt/photo'], ['GET', '/api/events/beach-hunt/results']]) {
+  for (const [method, path] of [['GET', `${ev.base}/me`], ['GET', `${ev.base}/play`], ['POST', `${ev.base}/answer`], ['POST', `${ev.base}/photo`], ['GET', `${ev.base}/results`]]) {
     const res = await anon.call(method, path, method === 'GET' ? undefined : { zone: 'z1', question: 'q1', answer: 'x' });
     assert.equal(res.status, 401, `${method} ${path}`);
   }
@@ -83,8 +83,8 @@ test('hostile text is only ever data: it comes back as JSON strings and never as
     content: { instructions: `<script>alert(1)</script> ${xss}`, zones: [{ id: 'z1', name: xss, map: null, questions: [{ id: 'q1', type: 'string', text: xss, answers: [xss], score: 5 }] }] },
   });
   const t = client(w, '5.5.5.5');
-  assert.equal((await t.post(`/api/events/${ev.slug}/join`, { name: xss })).status, 200);
-  const res = await client(w).get(`/api/events/${ev.slug}/scoreboard`);
+  assert.equal((await t.post(`${ev.base}/join`, { name: xss })).status, 200);
+  const res = await client(w).get(`${ev.base}/scoreboard`);
   assert.match(res.headers['content-type'], /^application\/json/);
   assert.equal(res.headers['x-content-type-options'], 'nosniff');
   assert.equal(res.body.teams[0].name, xss.slice(0, 30).length === xss.length ? xss : res.body.teams[0].name);
@@ -127,8 +127,8 @@ test('malformed and oversized requests are refused cleanly', async () => {
 test('no response ever sets a cookie without HttpOnly, Secure and SameSite', async () => {
   const w = createWorld(GAME_START - 1000);
   const ann = await register(w, 'ann');
-  await createEvent(ann);
-  const team = await client(w, '4.4.4.4').call('POST', '/api/events/beach-hunt/join', { name: 'Gulls' });
+  const ev = await createEvent(ann);
+  const team = await client(w, '4.4.4.4').call('POST', `${ev.base}/join`, { name: 'Gulls' });
   for (const res of [team, await client(w, '4.4.4.5').call('POST', '/api/auth/register', { username: 'zed1', password: 'zed-long-password-2' })]) {
     assert.ok(res.raw.cookies.length > 0);
     for (const c of res.raw.cookies) for (const attr of ['HttpOnly', 'Secure', 'SameSite=Strict']) assert.ok(c.includes(attr), `${c} lacks ${attr}`);
@@ -169,7 +169,7 @@ test('uploads: the file must really be an image, the address cannot be chosen, a
   assert.equal((await ann.post(`/api/admin/events/${ev.id}/zones/z1/map`, { thumb: html, full: png })).body.error, 'invalid-image');
   assert.equal((await ann.post(`/api/admin/events/${ev.id}/zones/..%2f..%2fx/map`, { thumb: png, full: png })).status, 400);
   assert.equal((await ann.post(`/api/admin/events/${ev.id}/zones/z1/map`, { thumb: png, full: png, key: '../../evil.html' })).status, 200);
-  for (const key of w.assets.files.keys()) assert.match(key, new RegExp(`^assets/${ev.id}/z1-[a-z0-9]+-(thumb|full)\\.png$`)); // only server-chosen names
+  for (const key of [...w.assets.files.keys()].filter((k) => k.startsWith(`assets/${ev.id}/`))) assert.match(key, new RegExp(`^assets/${ev.id}/z1-[a-z0-9]+-(thumb|full)\\.png$`)); // only server-chosen names
   for (let i = 0; i < 60; i++) await ann.post(`/api/admin/events/${ev.id}/zones/z1/map`, { thumb: png, full: png });
   assert.equal((await ann.post(`/api/admin/events/${ev.id}/zones/z1/map`, { thumb: png, full: png })).status, 429);
 });
@@ -234,7 +234,7 @@ test('one hunt can only ever take 60 MB of uploaded pictures, and a copy starts 
 test('every API response, errors included, carries the security headers (CloudFront adds none to errors)', async () => {
   const w = createWorld();
   const anon = client(w);
-  for (const [method, path, body] of [['GET', '/api/auth/me'], ['GET', '/api/events/none/info'], ['GET', '/api/admin/events'], ['POST', '/api/auth/login', {}], ['GET', '/api/nope'], ['DELETE', '/api/auth/me']]) {
+  for (const [method, path, body] of [['GET', '/api/auth/me'], ['GET', '/api/events/abcd/none/info'], ['GET', '/api/admin/events'], ['POST', '/api/auth/login', {}], ['GET', '/api/nope'], ['DELETE', '/api/auth/me']]) {
     const res = await anon.call(method, path, body);
     const h = res.headers;
     assert.equal(h['x-content-type-options'], 'nosniff', `${method} ${path} ${res.status}`);

@@ -6,7 +6,8 @@
 //                    T#<nnnnn>          a team: name, secret, score, done
 //                    N#<nameKey>        reserves a team name (conditional put = uniqueness)
 //                    A#<nnnnn>#<key>    a team's answer or photo submission (conditional put = first one counts)
-//   PK S#<slug>      S                  slug -> eventId (conditional put = unique slugs)
+//   PK S#<org>#<slug> S                 organiser code + hunt address -> eventId (conditional put = unique per organiser)
+//   PK OC#<code>     S                  organiser code -> username (conditional put = unique codes)
 //   PK U#<name>      U                  a user; gsi1pk USERS, gsi1sk <name>
 //   PK SESS#<hash>   S                  an admin session (ttl)
 //   PK RATE#<key>    <window>           a rate counter (ttl)
@@ -77,7 +78,17 @@ export function createDynamoStore({ tableName, endpoint, now = Date.now, client 
     getUser: async (name) => strip(await get(`U#${name}`, 'U')),
     async putUser(u) { await put({ PK: `U#${u.name}`, SK: 'U', gsi1pk: 'USERS', gsi1sk: u.name, ...u }); },
     listUsers: async () => (await byGsi('USERS', '')).map(strip),
-    async deleteUser(name) { await del(`U#${name}`, 'U'); },
+    async deleteUser(name) {
+      const u = await get(`U#${name}`, 'U');
+      if (u?.code) await del(`OC#${u.code}`, 'S');
+      await del(`U#${name}`, 'U');
+    },
+    async claimOrgCode(code, name) {
+      try {
+        await put({ PK: `OC#${code}`, SK: 'S', user: name }, 'attribute_not_exists(PK)');
+        return true;
+      } catch (e) { if (isConditionFailure(e)) return false; throw e; }
+    },
 
     async putSession(hash, s, ttlSec) {
       await put({ PK: `SESS#${hash}`, SK: 'S', ...s, ttl: Math.floor(now() / 1000) + ttlSec });
@@ -119,14 +130,14 @@ export function createDynamoStore({ tableName, endpoint, now = Date.now, client 
 
     async createEvent(ev) {
       try {
-        await put({ PK: `S#${ev.slug}`, SK: 'S', eventId: ev.id }, 'attribute_not_exists(PK)');
+        await put({ PK: `S#${ev.org}#${ev.slug}`, SK: 'S', eventId: ev.id }, 'attribute_not_exists(PK)');
       } catch (e) { if (isConditionFailure(e)) return false; throw e; }
       await put(eventItem(ev));
       return true;
     },
     getEvent: async (id) => strip(await get(`E#${id}`, 'META')),
-    async getEventBySlug(slug) {
-      const s = await get(`S#${slug}`, 'S');
+    async getEventBySlug(org, slug) {
+      const s = await get(`S#${org}#${slug}`, 'S');
       return s ? strip(await get(`E#${s.eventId}`, 'META')) : null;
     },
     async putEvent(ev) { await put(eventItem(ev)); },
@@ -134,7 +145,8 @@ export function createDynamoStore({ tableName, endpoint, now = Date.now, client 
     listEventsByOwner: async (owner) => (await byGsi('EVENTS', `${owner}#`)).map(strip).sort((a, b) => a.createdAt - b.createdAt),
     async deleteEvent(id) {
       const ev = await get(`E#${id}`, 'META');
-      if (ev) await del(`S#${ev.slug}`, 'S');
+      if (ev) await del(`S#${ev.org}#${ev.slug}`, 'S');
+      if (ev && !ev.org) await del(`S#${ev.slug}`, 'S'); // a hunt made before organiser codes existed: its old address record
       await batchDelete(await queryAll({ KeyConditionExpression: 'PK = :pk', ExpressionAttributeValues: { ':pk': `E#${id}` } }));
     },
     getContent: async (id) => strip(await get(`E#${id}`, 'CONTENT'))?.content ?? null,

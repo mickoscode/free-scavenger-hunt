@@ -103,11 +103,11 @@ test('admin routes need a session; unknown routes and methods are reported', asy
 test('deleting your own account removes your hunts; the site admin cannot be deleted this way', async () => {
   const w = createWorld();
   const a = await register(w, 'ann', 'first-password-1');
-  await a.post('/api/admin/events', { slug: 'anns-hunt', name: 'x' });
+  const made = (await a.post('/api/admin/events', { slug: 'anns-hunt', name: 'x' })).body;
   assert.equal((await a.post('/api/auth/delete', { password: 'wrong-password' })).body.error, 'invalid-login');
   assert.equal((await a.post('/api/auth/delete', { password: 'first-password-1' })).status, 200);
   assert.equal((await a.get('/api/auth/me')).body.user, null);
-  assert.equal((await client(w).get('/api/events/anns-hunt')).body.error, 'no-event');
+  assert.equal((await client(w).get(`/api/events/${made.org}/anns-hunt/info`)).body.error, 'no-event');
   assert.equal(await w.store.getUser('ann'), null);
   assert.equal((await client(w, '3.3.3.3').post('/api/auth/register', { username: 'ann', password: 'first-password-1' })).status, 200); // the name is free again
 

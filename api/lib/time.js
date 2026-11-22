@@ -43,3 +43,16 @@ export const isRealDate = (s) => {
   return t.getUTCFullYear() === y && t.getUTCMonth() === m - 1 && t.getUTCDate() === d;
 };
 export const isTime = (s) => typeof s === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(s);
+
+// The wall clock in a time zone at an instant: { date: 'yyyy-mm-dd', time: 'hh:mm' }.
+export function localDateTime(utcMs, timeZone) {
+  const p = Object.fromEntries(formatterFor(timeZone).formatToParts(new Date(utcMs)).map((x) => [x.type, +x.value]));
+  const two = (n) => String(n).padStart(2, '0');
+  return { date: `${p.year}-${two(p.month)}-${two(p.day)}`, time: `${two(p.hour)}:${two(p.minute)}` };
+}
+
+// 'yyyy-mm-dd' plus a number of days.
+export function addDays(dateStr, days) {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  return new Date(Date.UTC(y, m - 1, d + days)).toISOString().slice(0, 10);
+}

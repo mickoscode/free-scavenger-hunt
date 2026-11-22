@@ -52,14 +52,16 @@ async function showDashboard(user) {
   show('#auth', false);
   show('#dashboard', true);
   paintSecurity(user);
+  $('#new-prefix').textContent = `/e/${user.code}/`;
   fillTimeZones($('#new-tz'));
   const res = await getJson('/api/admin/events');
   const events = res.body?.events ?? [];
   $('#no-events').hidden = events.length > 0;
   const list = $('#events-list');
   list.replaceChildren(...events.map((e) => el('a', { class: 'card card-body mb-2 text-decoration-none', href: `/admin/event/?id=${e.id}`, 'data-testid': 'event-card', 'data-slug': e.slug },
-    el('div', { class: 'd-flex justify-content-between gap-2' }, el('strong', { class: 'team-name' }, e.name), el('span', { class: 'badge text-bg-secondary' }, e.status)),
-    el('div', { class: 'small text-muted' }, `/e/${e.slug}/ · ${e.day} · ${e.teamCount} team${e.teamCount === 1 ? '' : 's'}`))));
+    el('div', { class: 'd-flex justify-content-between align-items-center gap-2' }, el('strong', { class: 'team-name' }, e.name), el('span', { class: 'badge text-bg-secondary' }, e.status)),
+    el('div', { class: 'small text-muted' }, `/e/${e.org}/${e.slug}/ · ${e.day} · ${e.teamCount} team${e.teamCount === 1 ? '' : 's'}`),
+    el('span', { class: 'btn btn-sm btn-outline-primary align-self-start mt-2' }, 'Manage ›'))));
   $('#create-form').hidden = res.body?.canCreate === false;
 }
 
@@ -81,7 +83,7 @@ $('#login-form').addEventListener('submit', async (e) => {
 $('#register-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   $('[data-testid="register-error"]').hidden = true;
-  const res = await postJson('/api/auth/register', { username: $('#reg-user').value, password: $('#reg-pass').value });
+  const res = await postJson('/api/auth/register', { username: $('#reg-user').value, password: $('#reg-pass').value, timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone });
   if (res.ok) showCodes(res.body.recoveryCodes); else fail('[data-testid="register-error"]', res);
 });
 

@@ -12,7 +12,10 @@
 <body>
 <main class="container page" data-testid="play-page">
   <div class="team-line" data-testid="team-line"><span class="team-number" data-testid="team-number"></span> <span class="team-label" data-testid="team-label"></span></div>
-  <p class="mb-1"><a href="../" data-testid="back-to-board">‹ view scoreboard</a> <a href="../results/" class="ms-3" data-testid="results-link" hidden>results</a></p>
+  <nav class="player-nav" aria-label="Game">
+    <a class="btn btn-outline-primary" href="../" data-testid="back-to-board">‹ Scoreboard</a>
+    <a class="btn btn-success" href="../results/" data-testid="results-link" hidden>Results</a>
+  </nav>
   <p class="status-line" data-testid="status" aria-live="polite"></p>
   <p data-testid="message" class="alert alert-info" hidden></p>
   <details class="card card-body mb-3" data-testid="instructions" hidden>

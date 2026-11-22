@@ -7,7 +7,8 @@ export function createMemoryStore(now = Date.now) {
   const users = new Map();
   const sessions = new Map();
   const rates = new Map();
-  const slugs = new Map(); // slug -> eventId
+  const slugs = new Map(); // `${org}/${slug}` -> eventId
+  const orgCodes = new Map(); // code -> username
   const events = new Map();
   const contents = new Map();
   const data = new Map(); // eventId -> { counter, teams: Map(n -> team), names: Set(key), answers: Map(`${n}|${key}` -> rec) }
@@ -27,7 +28,17 @@ export function createMemoryStore(now = Date.now) {
     getUser: async (name) => clone(users.get(name)) ?? null,
     async putUser(u) { users.set(u.name, clone(u)); },
     listUsers: async () => [...users.values()].map(clone).sort((a, b) => a.name.localeCompare(b.name)),
-    async deleteUser(name) { users.delete(name); },
+    async deleteUser(name) {
+      const u = users.get(name);
+      if (u?.code) orgCodes.delete(u.code);
+      users.delete(name);
+    },
+    // Reserves an organiser code for a user (false if somebody else has it).
+    async claimOrgCode(code, name) {
+      if (orgCodes.has(code)) return false;
+      orgCodes.set(code, name);
+      return true;
+    },
 
     async putSession(hash, s, ttlSec) { sessions.set(hash, { ...clone(s), expiresAt: now() + ttlSec * 1000 }); },
     async getSession(hash) {
@@ -59,19 +70,19 @@ export function createMemoryStore(now = Date.now) {
     },
 
     async createEvent(ev) {
-      if (slugs.has(ev.slug)) return false;
-      slugs.set(ev.slug, ev.id);
+      if (slugs.has(`${ev.org}/${ev.slug}`)) return false;
+      slugs.set(`${ev.org}/${ev.slug}`, ev.id);
       events.set(ev.id, clone(ev));
       return true;
     },
     getEvent: async (id) => clone(events.get(id)) ?? null,
-    getEventBySlug: async (slug) => clone(events.get(slugs.get(slug))) ?? null,
+    getEventBySlug: async (org, slug) => clone(events.get(slugs.get(`${org}/${slug}`))) ?? null,
     async putEvent(ev) { events.set(ev.id, clone(ev)); },
     listEvents: async () => [...events.values()].map(clone).sort((a, b) => a.createdAt - b.createdAt),
     listEventsByOwner: async (owner) => [...events.values()].filter((e) => e.owner === owner).map(clone).sort((a, b) => a.createdAt - b.createdAt),
     async deleteEvent(id) {
       const ev = events.get(id);
-      if (ev) slugs.delete(ev.slug);
+      if (ev) slugs.delete(`${ev.org}/${ev.slug}`);
       events.delete(id);
       contents.delete(id);
       data.delete(id);

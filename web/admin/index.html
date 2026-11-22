@@ -89,8 +89,8 @@
       <div class="row g-2">
         <div class="col-12 col-md-6"><label class="form-label" for="new-name">Name</label>
           <input id="new-name" class="form-control" maxlength="80" placeholder="Sorrento Youth Scavenger Hunt" data-testid="new-name"></div>
-        <div class="col-12 col-md-6"><label class="form-label" for="new-slug">Address <span class="text-muted small">(what players type or scan)</span></label>
-          <div class="input-group"><span class="input-group-text">/e/</span><input id="new-slug" class="form-control" maxlength="40" autocapitalize="off" placeholder="sorrento-youth" data-testid="new-slug"></div></div>
+        <div class="col-12 col-md-6"><label class="form-label" for="new-slug">Address <span class="text-muted small">(the name in the web address)</span></label>
+          <div class="input-group"><span class="input-group-text" id="new-prefix">/e/</span><input id="new-slug" class="form-control" maxlength="40" autocapitalize="off" placeholder="sorrento-youth" data-testid="new-slug"></div></div>
         <div class="col-12"><label class="form-label" for="new-tz">Time zone</label><select id="new-tz" class="form-select" data-testid="new-tz"></select></div>
       </div>
       <button class="btn btn-primary mt-3 align-self-start" type="submit" data-testid="create-button">Create hunt</button>

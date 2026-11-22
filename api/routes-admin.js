@@ -8,7 +8,7 @@ import { buildResults } from './lib/results.js';
 import { decisionPercent, isDecision, photoPoints } from './lib/scoring.js';
 import { teamLabel } from './lib/teams.js';
 import { normaliseWhatsappUrl } from './lib/whatsapp.js';
-import { eventState, loadManagedEvent, requireUser } from './context.js';
+import { eventState, loadManagedEvent, orgCodeFor, requireUser } from './context.js';
 import { fail, json } from './http.js';
 import { rankTeams } from './routes-public.js';
 
@@ -44,7 +44,7 @@ export function adminRoutes(router, ctx) {
   async function summary(event) {
     const { status } = await eventState(ctx, event);
     return {
-      id: event.id, slug: event.slug, owner: event.owner, name: event.name, status, day: event.day, start: event.start, end: event.end,
+      id: event.id, slug: event.slug, org: event.org, owner: event.owner, name: event.name, status, day: event.day, start: event.start, end: event.end,
       timeZone: event.timeZone, teamCount: (await store.listTeams(event.id)).length, resultsPublished: Boolean(event.resultsPublished),
     };
   }
@@ -65,13 +65,13 @@ export function adminRoutes(router, ctx) {
     const tz = timeZone ?? DEFAULT_TIME_ZONE;
     const today = new Date(ctx.now()).toISOString().slice(0, 10);
     const event = {
-      id: randomId(10), slug, owner: user.name, createdAt: ctx.now(), name: name.trim(), timeZone: tz, day: today, start: '09:00', end: '12:00',
+      id: randomId(10), slug, org: await orgCodeFor(ctx, user), owner: user.name, createdAt: ctx.now(), name: name.trim(), timeZone: tz, day: today, start: '09:00', end: '12:00',
       teamNames: true, joinCode: '', whatsappUrl: null, resultsPublished: false,
     };
     if (validateConfig(event).length) fail(400, 'invalid-time-zone');
     if (!(await store.createEvent(event))) fail(409, 'slug-taken');
     await store.putContent(event.id, { instructions: '', zones: [] });
-    return json(200, { id: event.id, slug: event.slug });
+    return json(200, { id: event.id, slug: event.slug, org: event.org });
   });
 
   // A copy of a hunt (settings, zones, questions, instructions and maps) under a new name and address: a starting point
@@ -82,7 +82,7 @@ export function adminRoutes(router, ctx) {
     if (typeof slug !== 'string' || !SLUG.test(slug)) fail(400, 'invalid-slug');
     if (typeof name !== 'string' || name.trim() === '' || name.trim().length > 80) fail(400, 'invalid-name');
     if (user.role !== 'site-admin' && (await store.listEventsByOwner(user.name)).length >= user.maxEvents) fail(409, 'event-limit');
-    const copy = { ...event, id: randomId(10), slug, owner: user.name, createdAt: ctx.now(), name: name.trim(), day: new Date(ctx.now()).toISOString().slice(0, 10), resultsPublished: false, uploadBytes: 0 };
+    const copy = { ...event, id: randomId(10), slug, org: await orgCodeFor(ctx, user), owner: user.name, createdAt: ctx.now(), name: name.trim(), day: new Date(ctx.now()).toISOString().slice(0, 10), resultsPublished: false, uploadBytes: 0 };
     if (!(await store.createEvent(copy))) fail(409, 'slug-taken');
     const zones = [];
     for (const z of content.zones) {
@@ -100,13 +100,13 @@ export function adminRoutes(router, ctx) {
       zones.push({ ...z, map });
     }
     await store.putContent(copy.id, { ...content, zones });
-    return json(200, { id: copy.id, slug: copy.slug });
+    return json(200, { id: copy.id, slug: copy.slug, org: copy.org });
   });
 
   router.get('/api/admin/events/:id', async (req) => {
     const { event, content, status, game } = await managed(req);
     return json(200, {
-      id: event.id, slug: event.slug, owner: event.owner, config: configOf(event), content, status, game,
+      id: event.id, slug: event.slug, org: event.org, owner: event.owner, config: configOf(event), content, status, game,
       resultsPublished: Boolean(event.resultsPublished), teamCount: (await store.listTeams(event.id)).length,
     });
   });

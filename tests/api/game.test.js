@@ -8,7 +8,7 @@ async function setup(opts) {
   const w = createWorld();
   const admin = await register(w, 'ann');
   const ev = await createEvent(admin, opts);
-  return { w, admin, ev, base: `/api/events/${ev.slug}`, adminBase: `/api/admin/events/${ev.id}` };
+  return { w, admin, ev, base: ev.base, adminBase: `/api/admin/events/${ev.id}` };
 }
 const join = async (w, base, name, extra = {}) => {
   const c = client(w, `9.${Math.floor(Math.random() * 250)}.${Math.floor(Math.random() * 250)}.1`);
@@ -20,10 +20,10 @@ test('phases follow the clock exactly: unconfigured, pre, active (inclusive), po
   const w = createWorld();
   const admin = await register(w, 'ann');
   const created = await admin.post('/api/admin/events', { slug: 'phase-test', name: 'P' });
-  const base = '/api/events/phase-test';
+  const base = `/api/events/${created.body.org}/phase-test`;
   assert.equal((await client(w).get(base)).body.status, 'unconfigured'); // no questions yet
-  await createEvent(admin, { slug: 'phased' });
-  const p = '/api/events/phased';
+  const phasedEvent = await createEvent(admin, { slug: 'phased' });
+  const p = phasedEvent.base;
   w.set(GAME_START - 1);
   assert.equal((await client(w).get(p)).body.status, 'pre');
   w.set(GAME_START);
@@ -272,7 +272,7 @@ test('public responses are cacheable for a moment; anything with a session is no
   assert.match((await client(w).get(`${base}/scoreboard`)).headers['cache-control'], /s-maxage=3/);
   assert.equal((await t.c.get(`${base}/me`)).headers['cache-control'], 'no-store');
   assert.equal((await t.c.get(`${base}/results`)).headers['cache-control'], 'no-store');
-  assert.equal((await client(w).get('/api/events/missing')).body.error, 'no-event');
+  assert.equal((await client(w).get('/api/events/zzzz/missing')).body.error, 'no-event');
 });
 
 test('the game information is the same at /info (what the pages use and CloudFront caches) and at the bare address, and carries nothing personal', async () => {

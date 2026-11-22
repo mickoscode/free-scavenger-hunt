@@ -11,22 +11,29 @@
 </head>
 <body>
 <main class="container page">
+  <section class="card card-body border-success mb-3" id="continue-card" data-testid="continue-card" hidden>
+    <h2 class="h5 mb-1">You have a game in progress</h2>
+    <p class="mb-2" id="continue-name"></p>
+    <a class="btn btn-success btn-lg" id="continue-link" data-testid="continue-link" href="/">Return to your game</a>
+  </section>
   <section class="hero text-center">
     <h1 class="display-5 fw-bold">Free Scavenger Hunt</h1>
     <p class="lead">Run a scavenger hunt for your school, club or community. Teams join on their phones, answer questions around your venue and race the clock. No apps, no cost.</p>
-    <a class="btn btn-primary btn-lg" href="/admin/" data-testid="create-link">Create your hunt</a>
-    <a class="btn btn-outline-secondary btn-lg ms-2" href="/admin/" data-testid="signin-link">Organiser sign in</a>
+    <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
+      <a class="btn btn-primary btn-lg" href="/admin/" data-testid="create-link">Create your hunt</a>
+      <a class="btn btn-outline-primary btn-lg" href="/admin/" data-testid="signin-link">Organiser sign in</a>
+    </div>
   </section>
 
   <section class="card card-body mb-4">
     <h2 class="h5">Joining a hunt?</h2>
-    <p class="mb-2">Scan the QR code your organiser gave you, or type the hunt's name below.</p>
+    <p class="mb-2">Scan the QR code your organiser gave you, or type the hunt's address below (for example <strong>ab3k/beach-hunt</strong>).</p>
     <form id="find-form" class="row g-2" novalidate>
       <div class="col-12 col-sm"><label class="visually-hidden" for="slug">Hunt name</label>
-        <div class="input-group"><span class="input-group-text">/e/</span><input id="slug" class="form-control form-control-lg" autocomplete="off" autocapitalize="off" placeholder="beach-hunt" data-testid="slug-input"></div></div>
+        <div class="input-group"><span class="input-group-text">/e/</span><input id="slug" class="form-control form-control-lg" autocomplete="off" autocapitalize="off" placeholder="ab3k/beach-hunt" data-testid="slug-input"></div></div>
       <div class="col-12 col-sm-auto"><button class="btn btn-primary btn-lg w-100" type="submit" data-testid="find-button">Go</button></div>
     </form>
-    <p class="text-danger mt-2 mb-0" id="find-error" hidden role="alert">Type the hunt's name using letters, numbers and dashes.</p>
+    <p class="text-danger mt-2 mb-0" id="find-error" hidden role="alert">Type the code and name from your organiser, like ab3k/beach-hunt.</p>
   </section>
 
   <section>

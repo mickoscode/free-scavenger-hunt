@@ -76,7 +76,7 @@ test('organiser builds a hunt, teams play it, results are published', async () =
     await h.shot(a, '05-overview');
     assert.equal(await a.textContent(tid('event-status')), 'In progress');
     const link = await a.getAttribute(tid('event-link'), 'href');
-    assert.match(link, /\/e\/beach-hunt\/$/);
+    assert.match(link, /\/e\/[a-z2-9]{4}\/beach-hunt\/$/);
 
     // ---- team 1 joins on a phone
     const p1 = await h.phone('team1');
@@ -157,7 +157,7 @@ test('organiser builds a hunt, teams play it, results are published', async () =
     await a.fill(tid('login-user'), 'ann');
     await a.fill(tid('login-pass'), 'a-long-password-1');
     await a.click(tid('login-button'));
-    await a.click(tid('event-card'));
+    await a.click(`${tid('event-card')}[data-slug="beach-hunt"]`);
     await a.click(tid('tab-scoring'));
     await a.waitForSelector(tid('applied-all'));
     await a.check(tid('applied-all'));

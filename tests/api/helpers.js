@@ -69,14 +69,14 @@ export const sampleContent = (maps = {}) => ({
 export async function createEvent(admin, { slug = 'beach-hunt', content = sampleContent(), config = {} } = {}) {
   const created = await admin.post('/api/admin/events', { slug, name: 'Beach Hunt', timeZone: 'Australia/Perth' });
   if (created.status !== 200) throw new Error(`create failed: ${JSON.stringify(created.body)}`);
-  const { id } = created.body;
+  const { id, org } = created.body;
   const cfg = await admin.put(`/api/admin/events/${id}/config`, {
     name: 'Beach Hunt', timeZone: 'Australia/Perth', day: '2026-11-14', start: '09:00', end: '12:00', teamNames: true, joinCode: '', whatsappUrl: '', ...config,
   });
   if (cfg.status !== 200) throw new Error(`config failed: ${JSON.stringify(cfg.body)}`);
   const saved = await admin.put(`/api/admin/events/${id}/content`, content);
   if (saved.status !== 200) throw new Error(`content failed: ${JSON.stringify(saved.body)}`);
-  return { id, slug };
+  return { id, slug, org, base: `/api/events/${org}/${slug}` };
 }
 
 export const GAME_START = Date.UTC(2026, 10, 14, 1, 0, 0);

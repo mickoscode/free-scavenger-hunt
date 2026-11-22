@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 
 export function storeContract(name, makeStore) {
   const t = (title, fn) => test(`${name}: ${title}`, async () => fn(await makeStore()));
-  const ev = (id, slug, owner = 'ann') => ({ id, slug, owner, createdAt: 1, name: 'E', timeZone: 'UTC', day: '2026-01-01', start: '09:00', end: '10:00' });
+  const ev = (id, slug, owner = 'ann', org = 'abcd') => ({ id, slug, org, owner, createdAt: 1, name: 'E', timeZone: 'UTC', day: '2026-01-01', start: '09:00', end: '10:00' });
 
   t('users are unique by name and can be listed, updated, deleted', async (s) => {
     assert.equal(await s.createUser({ name: 'ann', role: 'event-admin' }), true);
@@ -50,14 +50,27 @@ export function storeContract(name, makeStore) {
     assert.equal((await s.getSettings()).registrationOpen, false);
   });
 
-  t('events have unique slugs and are found by id, slug and owner', async (s) => {
+  t('organiser codes are unique and are freed when the user is deleted', async (s) => {
+    await s.createUser({ name: 'ann', role: 'event-admin', code: 'abcd' });
+    await s.createUser({ name: 'bob', role: 'event-admin', code: 'wxyz' });
+    assert.equal(await s.claimOrgCode('abcd', 'ann'), true);
+    assert.equal(await s.claimOrgCode('abcd', 'bob'), false);
+    assert.equal(await s.claimOrgCode('wxyz', 'bob'), true);
+    await s.deleteUser('ann');
+    assert.equal(await s.claimOrgCode('abcd', 'bob'), true);
+  });
+
+  t('hunt addresses are unique per organiser code, and events are found by id, address and owner', async (s) => {
     assert.equal(await s.createEvent(ev('e1', 'one')), true);
-    assert.equal(await s.createEvent(ev('e2', 'one')), false);
-    await s.createEvent(ev('e3', 'three', 'bob'));
-    assert.equal((await s.getEventBySlug('one')).id, 'e1');
-    assert.equal(await s.getEventBySlug('nope'), null);
+    assert.equal(await s.createEvent(ev('e2', 'one')), false); // same organiser, same name
+    assert.equal(await s.createEvent(ev('e4', 'one', 'bob', 'wxyz')), true); // another organiser may use the same name
+    assert.equal((await s.getEventBySlug('wxyz', 'one')).id, 'e4');
+    await s.createEvent(ev('e3', 'three', 'bob', 'wxyz'));
+    assert.equal((await s.getEventBySlug('abcd', 'one')).id, 'e1');
+    assert.equal(await s.getEventBySlug('abcd', 'nope'), null);
+    assert.equal(await s.getEventBySlug('zzzz', 'one'), null);
     assert.deepEqual((await s.listEventsByOwner('ann')).map((e) => e.id), ['e1']);
-    assert.equal((await s.listEvents()).length, 2);
+    assert.equal((await s.listEvents()).length, 3);
     await s.putEvent({ ...ev('e1', 'one'), name: 'Changed' });
     assert.equal((await s.getEvent('e1')).name, 'Changed');
   });
@@ -135,5 +148,6 @@ export function storeContract(name, makeStore) {
     assert.equal(await s.getContent('e1'), null);
     assert.deepEqual(await s.listTeams('e1'), []);
     assert.equal(await s.createEvent(ev('e9', 'one')), true);
+    assert.equal((await s.getEventBySlug('abcd', 'one')).id, 'e9');
   });
 }

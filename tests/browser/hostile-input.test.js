@@ -28,7 +28,7 @@ test('hostile text in names, questions and instructions is shown as text and nev
     // a team with a hostile name plays; a viewer watches
     const p = await h.phone('team');
     const player = p.page;
-    await player.goto(h.url('/e/evil-hunt/'));
+    await player.goto(h.url(`/e/${created.org}/evil-hunt/`));
     await player.fill(tid('team-name'), TEAM);
     await player.click(tid('join-button'));
     await player.waitForSelector(tid('zone-tile'));
@@ -44,7 +44,7 @@ test('hostile text in names, questions and instructions is shown as text and nev
     assert.equal(await player.locator('img[src="x"]').count(), 0); // no element was created from the text
 
     const v = await h.phone('viewer');
-    await v.page.goto(h.url('/e/evil-hunt/'));
+    await v.page.goto(h.url(`/e/${created.org}/evil-hunt/`));
     await v.page.waitForSelector(tid('score-row'));
     assert.match(await v.page.textContent(tid('score-row')), /<img src=x/);
     assert.equal(await v.page.evaluate(() => window.__pwned), undefined);
@@ -60,10 +60,10 @@ test('hostile text in names, questions and instructions is shown as text and nev
       assert.equal(await a.locator('img[src="x"]').count(), 0, tab);
     }
     await a.goto(h.url('/admin/'));
-    await a.waitForSelector(tid('event-card'));
+    await a.waitForSelector(`${tid('event-card')}[data-slug="evil-hunt"]`);
     assert.equal(await a.evaluate(() => window.__pwned), undefined);
     assert.equal(await a.locator('img[src="x"]').count(), 0);
-    assert.match(await a.textContent(tid('event-card')), /<img src=x/);
+    assert.match(await a.textContent(`${tid('event-card')}[data-slug="evil-hunt"]`), /<img src=x/);
 
     // the content security policy would have blocked inline handlers anyway: nothing was reported blocked (the text never became markup)
     assert.deepEqual(h.errors.filter((e) => /Content Security Policy/i.test(e)), []);

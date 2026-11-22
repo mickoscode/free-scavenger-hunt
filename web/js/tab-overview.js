@@ -15,7 +15,7 @@ function qrImage(text) {
 
 export async function mountOverview(body, ctx) {
   const d = ctx.data;
-  const url = `${location.origin}/e/${d.slug}/`;
+  const url = `${location.origin}/e/${d.org}/${d.slug}/`;
   const qr = el('div', { class: 'qr border rounded p-1 bg-white', 'data-testid': 'qr' }, qrImage(url));
   const questions = countQuestionsOf(d.content);
 

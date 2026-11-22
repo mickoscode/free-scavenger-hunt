@@ -26,7 +26,7 @@ export async function mountTeams(body, ctx) {
   }
 
   async function refresh() {
-    const [res, board] = await Promise.all([getJson(`${ctx.base}/teams`), getJson(`/api/events/${ctx.data.slug}/scoreboard`)]);
+    const [res, board] = await Promise.all([getJson(`${ctx.base}/teams`), getJson(`/api/events/${ctx.data.org}/${ctx.data.slug}/scoreboard`)]);
     if (!res.ok) return;
     const teams = res.body.teams;
     heading.textContent = board.body?.resultsPublished ? 'final results:' : 'provisional results:';
@@ -34,7 +34,7 @@ export async function mountTeams(body, ctx) {
     note.hidden = teams.length > 0;
     const total = board.body?.questionTotal ?? 0;
     const rows = teams.map((t) => {
-      const view = el('button', { type: 'button', class: 'btn btn-link p-0 text-start team-name', 'data-testid': 'team-view' }, t.name);
+      const view = el('button', { type: 'button', class: 'btn btn-link p-0 text-start team-name', title: 'Show this team\'s answers', 'data-testid': 'team-view' }, `${t.name} ›`);
       view.addEventListener('click', () => showTeam(t.number));
       const remove = el('button', { type: 'button', class: 'btn btn-sm btn-outline-danger', 'data-testid': 'team-remove' }, 'Remove');
       remove.addEventListener('click', async () => {

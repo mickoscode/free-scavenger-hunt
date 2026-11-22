@@ -38,3 +38,9 @@ See `README.md` (layout, workflows) and `docs/setup.md` (wiring).
 - Workflows: no `pull_request_target`; never interpolate event data into a script (use `env:`); new third-party actions must be pinned by SHA and added to `patterns_allowed` in `bootstrap/github.tf`.
 - Git identity for this repo is the GitHub no-reply address: never commit with a personal email.
 - CloudFront must stay eligible for the Free/Pro flat-rate plans (see docs/security.md, cost): only AWS-managed response-header, cache and origin-request policies, at most 5 cache behaviors. Security headers come from `terraform/headers.js`. Only `/api/events/*/info` and `/scoreboard` may ever be cached; never put anything personal in them.
+
+## Addresses and the demo
+
+- A hunt's address is `/e/<organiser code>/<hunt>/`; API `/api/events/:org/:slug/...`. Every account has a 4 character code (`orgCodeFor` assigns one lazily to older accounts). Hunt names are unique per organiser, not globally. Never build a hunt address from a slug alone.
+- Every signup creates a `demo-hunt` (`api/demo/`): 6 zones, 53 questions, pictures in `api/demo/images/` (licences in `api/demo/credits.json`, shown in the demo's instructions). If you change the demo's questions keep the Code-breakers answers derived from the questions they refer to (`tests/api/demo.test.js` checks), and keep every image's licence and author in `credits.json`. `scripts/make-demo-logo.js` redraws the Code-breakers picture.
+- Players must never be given a way out of a game by accident: no link to `/` on view/play/results pages (the browser tests check), and the landing page offers the last hunt back.
