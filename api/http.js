@@ -15,17 +15,23 @@ export function createRouter() {
   const add = (method) => (pattern, handler) => {
     const keys = [];
     const re = new RegExp(`^${pattern.replace(/:([a-z]+)/gi, (_, k) => { keys.push(k); return '([^/]+)'; })}/?$`);
-    routes.push({ method, re, keys, handler });
+    routes.push({ method, re, keys, handler, pattern });
   };
   return {
     get: add('GET'), post: add('POST'), put: add('PUT'), patch: add('PATCH'), delete: add('DELETE'),
     match(method, path) {
       for (const r of routes) {
         const m = r.re.exec(path);
-        if (m && r.method === method) return { handler: r.handler, params: Object.fromEntries(r.keys.map((k, i) => [k, decodeURIComponent(m[i + 1])])) };
+        if (!m || r.method !== method) continue;
+        try {
+          return { handler: r.handler, params: Object.fromEntries(r.keys.map((k, i) => [k, decodeURIComponent(m[i + 1])])) };
+        } catch {
+          return null; // a malformed %-escape is just an unknown route
+        }
       }
       return null;
     },
+    list: () => routes.map((r) => ({ method: r.method, pattern: r.pattern })),
     knows: (path) => routes.some((r) => r.re.test(path)),
   };
 }

@@ -30,6 +30,20 @@ export function storeContract(name, makeStore) {
     assert.equal(await s.bumpRate('other', 60), 1);
   });
 
+  t('rate counters can be read without counting, and users update only if their session generation is unchanged', async (s) => {
+    assert.equal(await s.getRate('r', 60), 0);
+    await s.bumpRate('r', 60);
+    await s.bumpRate('r', 60);
+    assert.equal(await s.getRate('r', 60), 2);
+    assert.equal(await s.getRate('r', 60), 2);
+    await s.createUser({ name: 'ann', role: 'event-admin', sessionGen: 0 });
+    assert.equal(await s.updateUserIf({ name: 'ann', role: 'event-admin', sessionGen: 1, x: 1 }, 0), true);
+    assert.equal(await s.updateUserIf({ name: 'ann', role: 'event-admin', sessionGen: 2, x: 2 }, 0), false); // stale
+    assert.equal((await s.getUser('ann')).x, 1);
+    assert.equal(await s.updateUserIf({ name: 'ann', role: 'event-admin', sessionGen: 2, x: 2 }, 1), true);
+    assert.equal(await s.updateUserIf({ name: 'ghost', sessionGen: 1 }, 0), false);
+  });
+
   t('settings default to open registration', async (s) => {
     assert.equal((await s.getSettings()).registrationOpen, true);
     await s.putSettings({ registrationOpen: false });

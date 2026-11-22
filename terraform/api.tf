@@ -17,6 +17,15 @@ data "archive_file" "placeholder" {
   }
 }
 
+# CloudFront sends this in a header to the API and the API refuses everything without it, so the API cannot be called
+# directly (its address is not secret: it appears in public build logs). That keeps rate limits, which are keyed on the
+# viewer address CloudFront reports, from being dodged with a forged address. To rotate it:
+# terraform apply -replace=random_password.origin_secret
+resource "random_password" "origin_secret" {
+  length  = 48
+  special = false
+}
+
 resource "aws_cloudwatch_log_group" "api" {
   name              = "/aws/lambda/${local.name}-api"
   retention_in_days = 30
@@ -82,10 +91,14 @@ resource "aws_lambda_function" "api" {
   timeout       = 15
   filename      = data.archive_file.placeholder.output_path
 
+  # A ceiling so a flood of requests can never use up the account's Lambda capacity that other projects share.
+  reserved_concurrent_executions = 100
+
   environment {
     variables = {
       FSH_TABLE         = aws_dynamodb_table.main.name
       FSH_ASSETS_BUCKET = aws_s3_bucket.assets.id
+      FSH_ORIGIN_SECRET = random_password.origin_secret.result
     }
   }
 
@@ -99,11 +112,13 @@ resource "aws_lambda_function" "api" {
 
 resource "aws_apigatewayv2_api" "api" {
   name          = "${local.name}-api"
+  description   = "free-scavenger-hunt API (reached only through CloudFront)"
   protocol_type = "HTTP"
 }
 
 resource "aws_apigatewayv2_integration" "api" {
   api_id                 = aws_apigatewayv2_api.api.id
+  description            = "The API function"
   integration_type       = "AWS_PROXY"
   integration_uri        = aws_lambda_function.api.invoke_arn
   payload_format_version = "2.0"
@@ -118,6 +133,7 @@ resource "aws_apigatewayv2_route" "api" {
 resource "aws_apigatewayv2_stage" "default" {
   api_id      = aws_apigatewayv2_api.api.id
   name        = "$default"
+  description = "Throttled default stage"
   auto_deploy = true
 
   default_route_settings {

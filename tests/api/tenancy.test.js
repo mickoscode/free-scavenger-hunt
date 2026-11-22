@@ -60,7 +60,7 @@ test('the site admin sees everything, manages users, and can act on any event', 
   const { name, password } = await seedSiteAdmin(w);
   const boss = client(w, '6.6.6.6');
   assert.equal((await boss.post('/api/auth/login', { username: name, password })).body.user.role, 'site-admin');
-  const ann = await register(w, 'ann', 'ann-password-123');
+  const ann = await register(w, 'ann', 'secret-garden-walk-9');
   const ev = await createEvent(ann, { slug: 'anns-hunt' });
 
   assert.deepEqual((await boss.get('/api/admin/events?all=1')).body.events.map((e) => e.slug), ['anns-hunt']);
@@ -74,16 +74,16 @@ test('the site admin sees everything, manages users, and can act on any event', 
   // suspend: their session stops working at once and they cannot log in
   assert.equal((await boss.patch('/api/site/users/ann', { status: 'suspended' })).status, 200);
   assert.equal((await ann.get('/api/admin/events')).status, 401);
-  assert.equal((await client(w, '1.2.3.4').post('/api/auth/login', { username: 'ann', password: 'ann-password-123' })).body.error, 'account-suspended');
+  assert.equal((await client(w, '1.2.3.4').post('/api/auth/login', { username: 'ann', password: 'secret-garden-walk-9' })).body.error, 'account-suspended');
   await boss.patch('/api/site/users/ann', { status: 'active', maxEvents: 1 });
-  assert.equal((await client(w, '1.2.3.4').post('/api/auth/login', { username: 'ann', password: 'ann-password-123' })).status, 200);
+  assert.equal((await client(w, '1.2.3.4').post('/api/auth/login', { username: 'ann', password: 'secret-garden-walk-9' })).status, 200);
 
   // reset password: temporary password works, the old one and old sessions do not
   const reset = (await boss.post('/api/site/users/ann/reset-password')).body;
   assert.match(reset.password, /^[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{5}$/);
   assert.equal((await ann.get('/api/admin/events')).status, 401);
   assert.equal((await client(w, '1.2.3.5').post('/api/auth/login', { username: 'ann', password: reset.password })).status, 200);
-  assert.equal((await client(w, '1.2.3.6').post('/api/auth/login', { username: 'ann', password: 'ann-password-123' })).body.error, 'invalid-login');
+  assert.equal((await client(w, '1.2.3.6').post('/api/auth/login', { username: 'ann', password: 'secret-garden-walk-9' })).body.error, 'invalid-login');
 
   // the site admin cannot be suspended or deleted through the API
   assert.equal((await boss.patch('/api/site/users/siteadmin', { status: 'suspended' })).status, 400);

@@ -47,6 +47,17 @@ export function createMemoryStore(now = Date.now) {
       return rates.get(slot);
     },
 
+    // Hits so far in the current window (without counting one).
+    async getRate(key, windowSec) { return rates.get(`${key}|${Math.floor(now() / (windowSec * 1000))}`) ?? 0; },
+
+    // Saves the user only if its sessionGen is still what the caller read (a password change or recovery elsewhere wins).
+    async updateUserIf(u, expectedGen) {
+      const cur = users.get(u.name);
+      if (!cur || (cur.sessionGen ?? 0) !== expectedGen) return false;
+      users.set(u.name, clone(u));
+      return true;
+    },
+
     async createEvent(ev) {
       if (slugs.has(ev.slug)) return false;
       slugs.set(ev.slug, ev.id);

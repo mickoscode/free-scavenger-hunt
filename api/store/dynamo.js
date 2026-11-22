@@ -32,7 +32,7 @@ export function createDynamoStore({ tableName, endpoint, now = Date.now, client 
   );
   const T = tableName;
   const get = async (PK, SK) => (await doc.send(new GetCommand({ TableName: T, Key: { PK, SK }, ConsistentRead: true }))).Item ?? null;
-  const put = (Item, condition) => doc.send(new PutCommand({ TableName: T, Item, ...(condition ? { ConditionExpression: condition } : {}) }));
+  const put = (Item, condition, values) => doc.send(new PutCommand({ TableName: T, Item, ...(condition ? { ConditionExpression: condition } : {}), ...(values ? { ExpressionAttributeValues: values } : {}) }));
   const del = (PK, SK) => doc.send(new DeleteCommand({ TableName: T, Key: { PK, SK } }));
 
   async function queryAll(params) {
@@ -99,6 +99,22 @@ export function createDynamoStore({ tableName, endpoint, now = Date.now, client 
         ExpressionAttributeValues: { ':one': 1, ':ttl': Math.floor(now() / 1000) + windowSec * 2 }, ReturnValues: 'UPDATED_NEW',
       }));
       return r.Attributes.hits;
+    },
+
+    async getRate(key, windowSec) {
+      const item = await get(`RATE#${key}`, String(Math.floor(now() / (windowSec * 1000))));
+      return item?.hits ?? 0;
+    },
+
+    async updateUserIf(u, expectedGen) {
+      try {
+        await put(
+          { PK: `U#${u.name}`, SK: 'U', gsi1pk: 'USERS', gsi1sk: u.name, ...u },
+          expectedGen === 0 ? 'attribute_exists(PK) AND (attribute_not_exists(sessionGen) OR sessionGen = :g)' : 'attribute_exists(PK) AND sessionGen = :g',
+          { ':g': expectedGen },
+        );
+        return true;
+      } catch (e) { if (isConditionFailure(e)) return false; throw e; }
     },
 
     async createEvent(ev) {

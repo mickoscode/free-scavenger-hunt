@@ -155,6 +155,7 @@ export function adminRoutes(router, ctx) {
     const { event } = await managed(req);
     if (!/^[a-z0-9-]{1,20}$/.test(req.params.zone)) fail(400, 'invalid-content');
     if ((await store.listTeams(event.id)).length > 0) fail(409, 'players-exist');
+    if ((await store.bumpRate(`map#${event.id}`, 3600)) > 60) fail(429, 'too-many-requests');
     const thumb = decodeImage(req.body?.thumb);
     const full = decodeImage(req.body?.full);
     if (!thumb || !full) fail(400, 'invalid-image');

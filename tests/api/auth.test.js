@@ -39,14 +39,23 @@ test('usernames and passwords are validated; names are unique', async () => {
   assert.equal((await client(w, '9.9.9.9').post('/api/auth/register', { username: 'ANN', password: 'long-enough-pass' })).body.error, 'username-taken');
 });
 
-test('too many wrong passwords lock the account for the window, then it recovers', async () => {
+test('wrong passwords lock only the guessing address, so a stranger cannot lock the owner out', async () => {
   const w = createWorld();
   await register(w, 'ann', 'right-password-1');
-  const c = client(w, '2.2.2.2');
-  for (let i = 0; i < 8; i++) await c.post('/api/auth/login', { username: 'ann', password: 'wrong-wrong-wrong' });
-  assert.equal((await c.post('/api/auth/login', { username: 'ann', password: 'right-password-1' })).status, 429);
+  const attacker = client(w, '2.2.2.2');
+  for (let i = 0; i < 8; i++) assert.equal((await attacker.post('/api/auth/login', { username: 'ann', password: 'wrong-wrong-wrong' })).body.error, 'invalid-login');
+  assert.equal((await attacker.post('/api/auth/login', { username: 'ann', password: 'right-password-1' })).status, 429); // even the right one, from there
+  assert.equal((await client(w, '2.2.2.3').post('/api/auth/login', { username: 'ann', password: 'right-password-1' })).status, 200); // the owner is fine
   w.advance(16 * 60 * 1000);
-  assert.equal((await c.post('/api/auth/login', { username: 'ann', password: 'right-password-1' })).status, 200);
+  assert.equal((await attacker.post('/api/auth/login', { username: 'ann', password: 'right-password-1' })).status, 200);
+});
+
+test('guessing from many addresses is capped per account; successful logins do not count', async () => {
+  const w = createWorld();
+  await register(w, 'ann', 'right-password-1');
+  for (let i = 0; i < 100; i++) await client(w, `9.9.9.${i}`).post('/api/auth/login', { username: 'ann', password: 'right-password-1' }); // 100 good logins
+  for (let i = 0; i < 60; i++) await client(w, `8.8.${Math.floor(i / 5)}.${i}`).post('/api/auth/login', { username: 'ann', password: 'wrong-wrong-wrong' });
+  assert.equal((await client(w, '6.6.6.6').post('/api/auth/login', { username: 'ann', password: 'right-password-1' })).status, 429);
 });
 
 test('registration is limited per address, and can be closed by the site admin', async () => {
@@ -145,7 +154,7 @@ test('a recovery code sets a new password, signs in, ends every other session, a
 test('a wrong code, an unknown user and a code for another account are all the same refusal', async () => {
   const w = createWorld();
   const a = await registerWithCodes(w, 'ann');
-  const b = await registerWithCodes(w, 'bob', 'bobs-password-123');
+  const b = await registerWithCodes(w, 'bob', 'sunny-day-walking-7');
   for (const body of [
     { username: 'ann', code: 'AAAAA-AAAAA-AAAAA-AAAAA', next: 'brand-new-password' },
     { username: 'nobody', code: a.codes[0], next: 'brand-new-password' },
@@ -160,11 +169,15 @@ test('a wrong code, an unknown user and a code for another account are all the s
   assert.equal((await client(w, '2.2.2.2').post('/api/auth/login', { username: 'bob', password: b.password })).status, 200); // bob unaffected
 });
 
-test('guessing is rate limited per account and per address, and the account stays recoverable afterwards', async () => {
+test('guessing is rate limited per address and (loosely) per account, and the owner can still recover afterwards', async () => {
   const w = createWorld();
   const { codes } = await registerWithCodes(w, 'ann');
-  for (let i = 0; i < 5; i++) await recover(w, { username: 'ann', code: 'BBBBB-BBBBB-BBBBB-BBBBB', next: 'brand-new-password' }, `3.3.3.${i}`);
-  assert.equal((await recover(w, { username: 'ann', code: codes[0], next: 'brand-new-password' }, '4.4.4.4')).status, 429); // locked for the hour, from anywhere
+  // one address: 15 tries an hour
+  for (let i = 0; i < 15; i++) await recover(w, { username: 'ann', code: 'BBBBB-BBBBB-BBBBB-BBBBB', next: 'brand-new-password' }, '3.3.3.3');
+  assert.equal((await recover(w, { username: 'ann', code: codes[0], next: 'brand-new-password' }, '3.3.3.3')).status, 429);
+  // many addresses: 40 tries an hour for the account overall, so even a botnet gets nowhere near a 99 bit code
+  for (let i = 0; i < 40; i++) await recover(w, { username: 'ann', code: 'BBBBB-BBBBB-BBBBB-BBBBB', next: 'brand-new-password' }, `7.7.${Math.floor(i / 10)}.${i}`);
+  assert.equal((await recover(w, { username: 'ann', code: codes[0], next: 'brand-new-password' }, '4.4.4.4')).status, 429);
   w.advance(61 * 60 * 1000);
   assert.equal((await recover(w, { username: 'ann', code: codes[0], next: 'brand-new-password' }, '4.4.4.4')).status, 200);
   const spray = createWorld();
