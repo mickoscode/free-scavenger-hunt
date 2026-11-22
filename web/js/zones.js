@@ -7,6 +7,7 @@ import { el } from './dom.js';
 import { postJson } from './api.js';
 import { sanitizeAnswer } from './answer-input.js';
 import { linkWhatsApp, safeWhatsAppUrl } from './markdown.js';
+import './top-link.js';
 
 const MESSAGES = {
   'invalid-answer': 'Please enter an answer in the right format.',
@@ -171,7 +172,7 @@ export function createZones({ container, base, onSubmitted }) {
       parts.push(mapButton, el('p', { class: 'small text-muted mt-1 mb-3' }, 'Tap the map to enlarge it.'));
     }
     zone.questions.forEach((q, i) => parts.push(isPhoto(q) ? buildPhoto(zone, q, photos.indexOf(q), photos.length, i + 1) : buildQuestion(zone, q, i + 1)));
-    parts.push(backBottom);
+    parts.push(backBottom, el('a', { href: '#top', class: 'btn btn-link w-100', 'data-testid': 'zone-top' }, '↑ Back to top'));
     panel.append(...parts);
     return panel;
   }

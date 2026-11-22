@@ -2,6 +2,7 @@
 import { $ } from './dom.js';
 import { eventBase, getJson } from './api.js';
 import { renderResults } from './results-view.js';
+import './top-link.js';
 
 const base = eventBase();
 const wanted = new URLSearchParams(location.search).get('team');

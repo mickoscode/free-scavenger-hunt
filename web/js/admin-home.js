@@ -58,10 +58,13 @@ async function showDashboard(user) {
   const events = res.body?.events ?? [];
   $('#no-events').hidden = events.length > 0;
   const list = $('#events-list');
-  list.replaceChildren(...events.map((e) => el('a', { class: 'card card-body mb-2 text-decoration-none', href: `/admin/event/?id=${e.id}`, 'data-testid': 'event-card', 'data-slug': e.slug },
+  // The whole card opens the hunt's manager (the Manage link stretches over it); Test is a separate link on top, straight to the page players see.
+  list.replaceChildren(...events.map((e) => el('div', { class: 'card card-body mb-2 event-card', 'data-testid': 'event-card', 'data-slug': e.slug },
     el('div', { class: 'd-flex justify-content-between align-items-center gap-2' }, el('strong', { class: 'team-name' }, e.name), el('span', { class: 'badge text-bg-secondary' }, e.status)),
     el('div', { class: 'small text-muted' }, `/e/${e.org}/${e.slug}/ · ${e.day} · ${e.teamCount} team${e.teamCount === 1 ? '' : 's'}`),
-    el('span', { class: 'btn btn-sm btn-outline-primary align-self-start mt-2' }, 'Manage ›'))));
+    el('div', { class: 'd-flex flex-wrap gap-2 mt-2' },
+      el('a', { class: 'btn btn-sm btn-outline-primary stretched-link', href: `/admin/event/?id=${e.id}`, 'data-testid': 'event-manage' }, 'Manage ›'),
+      el('a', { class: 'btn btn-sm btn-outline-success event-test', href: `/e/${e.org}/${e.slug}/`, title: 'Open the page players see', 'data-testid': 'event-test' }, 'Test ›')))));
   $('#create-form').hidden = res.body?.canCreate === false;
 }
 

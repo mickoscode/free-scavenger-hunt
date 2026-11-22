@@ -59,3 +59,8 @@ The detailed security review (residual risks, cost-abuse economics, open items) 
 ## Workflow
 
 - One branch and one pull request per change (`main` is protected). When a PR has merged, return to `main`, pull, and **delete its local branch in the same step**; squash merges are not listed by `git branch --merged`, so confirm with `gh pr list --state merged --head <branch>` first. Never delete a branch with an open PR or unmerged work.
+
+## Small UI gotchas
+
+- Do not put a CSS `transform` on something that contains an absolutely positioned child (a button with `stretched-link`): the transform becomes the child's reference frame and shrinks its clickable area while pressed (`.btn.stretched-link:active { transform: none }`). Browser tests click the whole hunt card to catch this.
+- `Back to top` links use `href="#top"` and a script (`web/js/top-link.js`) that scrolls instead of changing the address: the hunt manager's tabs and the play page's zones live in the address hash.

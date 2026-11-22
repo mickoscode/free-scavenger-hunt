@@ -12,13 +12,13 @@
   <link rel="stylesheet" href="/css/bootstrap.min.css">
   <link rel="stylesheet" href="/css/site.css">
 </head>
-<body class="home">
+<body id="top" class="home">
 <header class="site-header">
   <div class="container site-header-inner">
     <a class="site-brand" href="/"><span aria-hidden="true">🧭</span> Free Scavenger Hunt</a>
     <nav class="site-nav" aria-label="Site">
       <a href="/about/" data-testid="about-link">About</a>
-      <a class="btn btn-sm btn-outline-primary" href="/admin/" data-testid="header-signin"><span class="d-none d-sm-inline">Organiser </span>Sign in</a>
+      <a class="btn btn-sm btn-outline-primary" href="/admin/" data-signin="header" data-testid="header-signin"><span class="d-none d-sm-inline">Organiser </span>Sign in</a>
     </nav>
   </div>
 </header>
@@ -44,7 +44,7 @@
           <p class="lead">Run a scavenger hunt for your school, club or community. Teams join on their phones, answer questions around your venue and race the clock. No apps, no cost.</p>
           <div class="d-grid gap-2 d-sm-flex flex-sm-wrap justify-content-sm-center justify-content-lg-start">
             <a class="btn btn-primary btn-lg text-nowrap" href="/admin/" data-testid="create-link">Create your hunt</a>
-            <a class="btn btn-outline-primary btn-lg text-nowrap" href="/admin/" data-testid="signin-link">Organiser sign in</a>
+            <a class="btn btn-outline-primary btn-lg text-nowrap" href="/admin/" data-signin="hero" data-testid="signin-link">Organiser sign in</a>
           </div>
         </div>
         <div class="col-lg-5">
@@ -92,10 +92,12 @@
 
 <footer class="site-footer" data-testid="site-footer">
   <div class="container">
+    <a class="back-to-top" href="#top" data-testid="back-to-top">↑ Back to top</a>
     <span class="footer-made">Made in Perth, Western Australia</span>
     <nav class="footer-links" aria-label="Footer"><a href="/about/" data-testid="footer-about">About</a></nav>
   </div>
 </footer>
 <script type="module" src="/js/home.js"></script>
+<script type="module" src="/js/public-session.js"></script>
 </body>
 </html>
