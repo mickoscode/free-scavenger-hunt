@@ -1,5 +1,6 @@
 // Scoring photo challenges (refreshes every 5 s), and publishing the final results.
 import { el } from './dom.js';
+import { helpToggle } from './help.js';
 import { getJson, postJson } from './api.js';
 import { explain } from './admin-shell.js';
 
@@ -73,9 +74,10 @@ export async function mountScoring(body, ctx) {
     paintPublish({ unscored: items.filter((i) => i.decision === null).length, resultsPublished, status });
   }
 
+  const photoHelp = el('p', { class: 'small text-muted' }, 'Check each photo in your WhatsApp group (team number, zone and challenge must be clear), choose full, half or zero, then Apply. You can change a decision later.');
   body.replaceChildren(
-    publishBox, el('h2', { class: 'h5' }, 'Photo challenges'),
-    el('p', { class: 'small text-muted' }, 'Check each photo in your WhatsApp group (team number, zone and challenge must be clear), choose full, half or zero, then Apply. You can change a decision later.'),
+    publishBox, el('h2', { class: 'h5 d-flex align-items-center gap-2' }, 'Photo challenges', helpToggle('photo scoring', photoHelp)),
+    photoHelp,
     list);
   await refresh(true);
   const timer = setInterval(refresh, 5000);

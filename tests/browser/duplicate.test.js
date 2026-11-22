@@ -31,7 +31,7 @@ test('Duplicate opens a quick form with v2- names, makes a real copy, and number
     await makeHunt(api, h, 'Summer Fun Hunt', 'summer-fun-hunt');
     await page.goto(h.url('/admin/'));
     await page.waitForSelector(card('summer-fun-hunt'));
-    assert.equal((await page.textContent('#create-form h2')).trim(), 'Create a new hunt');
+    assert.match((await page.textContent('#create-form h2')).trim(), /^Create a new hunt/);
     assert.equal((await page.textContent(`${card('summer-fun-hunt')} ${tid('event-duplicate')}`)).trim(), 'Duplicate ›');
     assert.equal(await page.isVisible(`${card('summer-fun-hunt')} ${tid('dup-form')}`), false);
 

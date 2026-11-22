@@ -77,3 +77,5 @@ Users table (hunt count and limit, suspend / activate, reset password to a one-t
 ## Parked
 
 Recovery by email (needs a sending domain and AWS email production access, and would store an address; the codes cover it without), custom domain, download of results, CSV export, translations.
+
+- **Help toggles**: long explanations on forms (create hunt, settings, recovery codes, sign-up, duplicate, photo scoring) are hidden behind a small round `?` button beside the heading or label (`web/js/help.js`); pressing it shows or hides the text. Plain-HTML pages mark the text with `data-help-for="<id of the label or heading>"`.

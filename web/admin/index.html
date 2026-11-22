@@ -70,8 +70,8 @@
           <button type="button" class="btn btn-link p-0 mt-2 align-self-start" id="forgot" data-testid="forgot">Forgot your password?</button>
         </form>
         <form id="recover-form" class="card card-body auth-card mt-3" hidden novalidate>
-          <h2 class="h5">Get back in with a recovery code</h2>
-          <p class="small text-muted">Use one of the recovery codes you saved when you created your account. It works once, then you choose a new password.</p>
+          <h2 class="h5" id="recover-title">Get back in with a recovery code</h2>
+          <p class="small text-muted" data-help-for="recover-title">Use one of the recovery codes you saved when you created your account. It works once, then you choose a new password.</p>
           <label class="form-label" for="rec-user">Username</label>
           <input id="rec-user" class="form-control mb-2" autocomplete="username" autocapitalize="off" data-testid="rec-user">
           <label class="form-label" for="rec-code">Recovery code</label>
@@ -85,8 +85,8 @@
       </div>
       <div class="col-12 col-md-6" id="register-col">
         <form id="register-form" class="card card-body auth-card auth-create" novalidate>
-          <h2 class="h5"><span aria-hidden="true">🚀</span> Create an organiser account</h2>
-          <p class="small text-muted">Free. Choose a username and a password of at least 10 characters. There is no email and no password recovery by email: keep your password safe.</p>
+          <h2 class="h5" id="register-title"><span aria-hidden="true">🚀</span> Create an organiser account</h2>
+          <p class="small text-muted" data-help-for="register-title">Free. Choose a username and a password of at least 10 characters. There is no email and no password recovery by email: keep your password safe.</p>
           <ul class="perks" aria-label="What you get">
             <li><span aria-hidden="true">🎁</span> A ready-made Demo Hunt waiting for you</li>
             <li><span aria-hidden="true">📱</span> Players just scan and play: no apps</li>
@@ -116,26 +116,26 @@
 
     <p class="alert alert-warning mt-4" id="limit-note" data-testid="limit-note" hidden></p>
     <form id="create-form" class="card card-body mt-4" novalidate>
-      <h2 class="h5">Create a new hunt</h2>
-      <p class="small text-muted">Give your hunt a name to get started. You can change almost everything later.</p>
+      <h2 class="h5" id="create-title">Create a new hunt</h2>
+      <p class="small text-muted" data-help-for="create-title">Give your hunt a name to get started. You can change almost everything later.</p>
       <div class="row g-3">
-        <div class="col-12 col-md-6"><label class="form-label" for="new-name">Name of your hunt</label>
+        <div class="col-12 col-md-6"><label class="form-label" id="new-name-label" for="new-name">Name of your hunt</label>
           <input id="new-name" class="form-control" maxlength="80" placeholder="e.g. Summer Fun Hunt" data-testid="new-name" aria-describedby="new-name-help">
-          <div class="form-text" id="new-name-help">This is what players see at the top of the game. The grey text is only an example: type your own name.</div></div>
-        <div class="col-12 col-md-6"><label class="form-label" for="new-slug">Web address</label>
+          <div class="form-text" id="new-name-help" data-help-for="new-name-label">This is what players see at the top of the game. The grey text is only an example: type your own name.</div></div>
+        <div class="col-12 col-md-6"><label class="form-label" id="new-slug-label" for="new-slug">Web address</label>
           <div class="input-group"><span class="input-group-text" id="new-prefix">/e/</span><input id="new-slug" class="form-control" maxlength="40" autocapitalize="off" placeholder="e.g. summer-fun-hunt" data-testid="new-slug" aria-describedby="new-slug-help"></div>
-          <div class="form-text" id="new-slug-help">The last part of the link players use. It fills in from your name, so you can usually leave it. Letters, numbers and dashes only. It can't be changed later.</div></div>
-        <div class="col-12"><label class="form-label" for="new-tz">Time zone</label><select id="new-tz" class="form-select" data-testid="new-tz"></select>
-          <div class="form-text">Where your event takes place, so the start and finish times are right.</div></div>
+          <div class="form-text" id="new-slug-help" data-help-for="new-slug-label">The last part of the link players use. It fills in from your name, so you can usually leave it. Letters, numbers and dashes only. It can't be changed later.</div></div>
+        <div class="col-12"><label class="form-label" id="new-tz-label" for="new-tz">Time zone</label><select id="new-tz" class="form-select" data-testid="new-tz"></select>
+          <div class="form-text" data-help-for="new-tz-label">Where your event takes place, so the start and finish times are right.</div></div>
       </div>
       <button class="btn btn-primary mt-3 align-self-start" type="submit" data-testid="create-button">Create hunt</button>
       <p class="text-danger mt-2 mb-0" role="alert" data-testid="create-error" hidden></p>
     </form>
 
     <section class="card card-body mt-4" id="recovery-card" data-testid="recovery-card">
-      <h2 class="h5">Recovery codes</h2>
+      <h2 class="h5" id="recovery-title">Recovery codes</h2>
       <p class="mb-2" id="recovery-status"></p>
-      <p class="small text-muted">If you forget your password, a recovery code gets you back in without anyone's help. Making new codes cancels the old ones.</p>
+      <p class="small text-muted" data-help-for="recovery-title">If you forget your password, a recovery code gets you back in without anyone's help. Making new codes cancels the old ones.</p>
       <div class="row g-2">
         <div class="col-12 col-md-6"><input type="password" class="form-control" id="rc-pass" placeholder="Your password" autocomplete="current-password" data-testid="rc-pass"></div>
         <div class="col-12 col-md-auto"><button type="button" class="btn btn-outline-primary" id="rc-make" data-testid="rc-make">Make new recovery codes</button></div>
