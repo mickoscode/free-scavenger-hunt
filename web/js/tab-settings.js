@@ -1,5 +1,6 @@
 // Name, time zone, day, start and end, team names, join code and WhatsApp link.
 import { el } from './dom.js';
+import { helpToggle } from './help.js';
 import { putJson } from './api.js';
 import { explain } from './admin-shell.js';
 import { fillTimeZones } from './timezones.js';
@@ -14,9 +15,7 @@ function field(label, input, help) {
   const row = el('div', { class: 'd-flex align-items-center gap-2 mb-1' }, el('label', { class: 'form-label mb-0', for: input.id }, label));
   if (help) {
     const text = el('p', { class: 'small text-muted mb-1', hidden: true }, help);
-    const toggle = el('button', { type: 'button', class: 'btn btn-sm btn-outline-secondary help-toggle', 'aria-label': `About ${label}`, 'aria-expanded': 'false' }, '?');
-    toggle.addEventListener('click', () => { text.hidden = !text.hidden; toggle.setAttribute('aria-expanded', String(!text.hidden)); });
-    row.append(toggle);
+    row.append(helpToggle(label, text));
     wrap.append(row, text, input);
   } else wrap.append(row, input);
   return wrap;

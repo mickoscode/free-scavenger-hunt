@@ -4,6 +4,7 @@ import { getJson, postJson } from './api.js';
 import { explain, loadSession, renderNav } from './admin-shell.js';
 import { fillTimeZones } from './timezones.js';
 import { duplicateDefaults, slugify } from './hunt-names.js';
+import { enhanceHelp, helpToggle } from './help.js';
 
 const show = (id, on) => { $(id).hidden = !on; };
 const fail = (sel, res) => { const n = $(sel); n.textContent = explain(res); n.hidden = false; };
@@ -73,8 +74,10 @@ async function showDashboard(user) {
     let touched = false; // until the address is edited by hand it follows the name
     slug.addEventListener('input', () => { touched = true; });
     name.addEventListener('input', () => { if (!touched) slug.value = slugify(name.value); });
+    const note = el('p', { class: 'small text-muted mb-2' }, 'A copy of this hunt: its settings, questions, instructions and maps (not its teams or scores). Give it a name and an address.');
     const form = el('form', { class: 'event-dup mt-3', novalidate: true, hidden: true, 'data-testid': 'dup-form' },
-      el('p', { class: 'small text-muted mb-2' }, 'A copy of this hunt: its settings, questions, instructions and maps (not its teams or scores). Give it a name and an address.'),
+      el('div', { class: 'd-flex align-items-center gap-2 mb-1' }, el('strong', { class: 'small' }, 'Duplicate this hunt'), helpToggle('duplicating', note)),
+      note,
       el('label', { class: 'form-label small mb-1' }, 'Name of the copy'), name,
       el('label', { class: 'form-label small mb-1 mt-2' }, 'Web address'),
       el('div', { class: 'input-group' }, el('span', { class: 'input-group-text' }, `/e/${e.org}/`), slug),
@@ -119,6 +122,7 @@ async function showDashboard(user) {
   $('#create-form').hidden = !canCreate;
 }
 
+enhanceHelp(); // the plain-HTML explanations become "?" toggles
 const { user, registrationOpen } = await loadSession();
 $('#public-header').hidden = Boolean(user); // signed-out visitors get the public header (Home, About); organisers get their own bar
 if (user) await showDashboard(user);
