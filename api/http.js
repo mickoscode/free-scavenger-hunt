@@ -55,7 +55,13 @@ export function json(status, body, { cookies = [], cache = 0 } = {}) {
     headers: {
       'content-type': 'application/json; charset=utf-8',
       'cache-control': cache > 0 ? `public, s-maxage=${cache}, max-age=0` : 'no-store',
+      // On every API response, errors included: CloudFront Functions do not run on error responses, so the CDN cannot be relied on
+      // to add these to a 400 or 429. (The strictest policy: an API response is data, never a page.)
       'x-content-type-options': 'nosniff',
+      'content-security-policy': "default-src 'none'; frame-ancestors 'none'",
+      'x-frame-options': 'DENY',
+      'referrer-policy': 'same-origin',
+      'strict-transport-security': 'max-age=31536000',
     },
     cookies,
     body: JSON.stringify(body),

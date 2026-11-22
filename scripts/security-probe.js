@@ -16,8 +16,8 @@ const raw = (path) => new Promise((resolve, reject) => {
 let n = 0;
 const check = async (name, fn) => { await fn(); console.log(`ok ${++n} - ${name}`); };
 
-await check('security headers on pages, assets and API responses', async () => {
-  for (const path of ['/', '/admin/', '/e/some-hunt/', '/api/auth/me', '/api/events/none']) {
+await check('security headers on successful pages and API responses (added by the CloudFront function)', async () => {
+  for (const path of ['/', '/admin/', '/e/some-hunt/', '/api/auth/me']) {
     const r = await get(site + path);
     const h = r.headers;
     assert.match(h.get('content-security-policy') ?? '', /default-src 'none'.*script-src 'self'.*frame-ancestors 'none'/, `${path} CSP`);
@@ -26,6 +26,22 @@ await check('security headers on pages, assets and API responses', async () => {
     assert.match(h.get('strict-transport-security') ?? '', /max-age=\d{7,}/, `${path} HSTS`);
     assert.match(h.get('permissions-policy') ?? '', /camera=\(\)/, `${path} permissions`);
   }
+});
+await check('API error responses carry their own security headers (CloudFront adds none to errors)', async () => {
+  for (const path of ['/api/events/none/info', '/api/events/none', '/api/admin/events', '/api/nope']) {
+    const r = await get(site + path);
+    assert.ok(r.status >= 400, path);
+    assert.equal(r.headers.get('x-content-type-options'), 'nosniff', `${path} nosniff`);
+    assert.equal(r.headers.get('content-security-policy'), "default-src 'none'; frame-ancestors 'none'", `${path} CSP`);
+    assert.equal(r.headers.get('x-frame-options'), 'DENY', `${path} frame`);
+  }
+});
+await check('the 404 page carries its own content security policy and no script', async () => {
+  const r = await get(site + '/definitely-not-a-page.html');
+  assert.equal(r.status, 404);
+  const html = await r.text();
+  assert.match(html, /http-equiv="Content-Security-Policy"/);
+  assert.doesNotMatch(html, /<script/i);
 });
 await check('plain http is redirected to https', async () => {
   const r = await get(site.replace('https://', 'http://') + '/');
