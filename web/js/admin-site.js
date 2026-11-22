@@ -39,7 +39,7 @@ else if (user) {
         el('td', {}, u.role === 'site-admin' ? '' : limit), el('td', {}, u.status), el('td', { class: 'text-end text-nowrap' }, ...actions));
     }));
     $('#all-events').replaceChildren(...(events.body?.events ?? []).map((e) => el('tr', {},
-      el('td', {}, el('a', { href: `/admin/event/?id=${e.id}` }, e.name), el('div', { class: 'small text-muted' }, `/e/${e.slug}/`)),
+      el('td', {}, el('a', { href: `/admin/event/?id=${e.id}` }, e.name), el('div', { class: 'small text-muted' }, `/e/${e.org}/${e.slug}/`)),
       el('td', {}, e.owner), el('td', {}, e.status), el('td', {}, e.day), el('td', {}, String(e.teamCount)))));
   }
 

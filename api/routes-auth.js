@@ -3,18 +3,20 @@
 // Recovery without anybody's help (and without personal data): at registration an organiser gets 8 one-time recovery
 // codes, shown once. Only hashes are stored. Forgetting the password, they sign in again with username + a code and
 // choose a new password. Using a code ends every session and leaves a notice on the account.
-import { ADMIN_COOKIE, clientKey, cookiesOf, currentUser, requireUser, startAdminSession } from './context.js';
+import { ADMIN_COOKIE, clientKey, cookiesOf, currentUser, orgCodeFor, requireUser, startAdminSession } from './context.js';
 import { cookie, fail, json } from './http.js';
 import { hashPassword, hashRecoveryCode, isReservedUsername, newRecoverySet, passwordProblem, safeEqual, sha256, verifyPassword } from './lib/passwords.js';
 import { isBlocked } from './lib/teams.js';
+import { isTimeZone } from './lib/time.js';
+import { createDemoHunt } from './demo/create.js';
 
 const USERNAME = /^[a-z0-9][a-z0-9_-]{2,29}$/;
-export const DEFAULT_MAX_EVENTS = 3;
+export const DEFAULT_MAX_EVENTS = 4; // the starter demo hunt plus three of their own
 const MAX_NOTICES = 5;
 
 // What a signed in user may know about their own account. Never the hashes.
 const publicUser = (u) => ({
-  name: u.name, role: u.role, maxEvents: u.maxEvents,
+  name: u.name, code: u.code ?? null, role: u.role, maxEvents: u.maxEvents,
   recoveryCodesLeft: (u.recovery ?? []).length, notices: u.notices ?? [],
 });
 export const addNotice = (user, type, at) => [...(user.notices ?? []), { type, at }].slice(-MAX_NOTICES);
@@ -28,7 +30,7 @@ export function authRoutes(router, ctx) {
   router.post('/api/auth/register', async (req) => {
     const settings = await store.getSettings();
     if (!settings.registrationOpen) fail(409, 'registration-closed');
-    const { username, password } = req.body ?? {};
+    const { username, password, timeZone } = req.body ?? {};
     const name = typeof username === 'string' ? username.trim().toLowerCase() : '';
     if (!USERNAME.test(name) || isBlocked(name) || isReservedUsername(name)) fail(400, 'invalid-username');
     const weak = passwordProblem(password, name);
@@ -40,6 +42,9 @@ export function authRoutes(router, ctx) {
       passwordHash: await hashPassword(password), recovery: recovery.hashes, notices: [], createdAt: ctx.now(),
     };
     if (!(await store.createUser(user))) fail(409, 'username-taken');
+    const org = await orgCodeFor(ctx, user);
+    // A starter hunt, so there is something to play straight away (and to copy as a template). Its time zone is the browser's.
+    await createDemoHunt(ctx, user, org, isTimeZone(timeZone) ? timeZone : undefined);
     return json(200, { user: publicUser(user), recoveryCodes: recovery.codes }, { cookies: [await startAdminSession(ctx, user)] });
   });
 
@@ -59,6 +64,7 @@ export function authRoutes(router, ctx) {
       fail(400, 'invalid-login');
     }
     if (user.status !== 'active') fail(409, 'account-suspended');
+    await orgCodeFor(ctx, user);
     return json(200, { user: publicUser(user) }, { cookies: [await startAdminSession(ctx, user)] });
   });
 
@@ -117,6 +123,7 @@ export function authRoutes(router, ctx) {
 
   router.get('/api/auth/me', async (req) => {
     const user = await currentUser(ctx, req);
+    if (user) await orgCodeFor(ctx, user);
     const settings = await store.getSettings();
     return json(200, { user: user ? publicUser(user) : null, registrationOpen: settings.registrationOpen });
   });

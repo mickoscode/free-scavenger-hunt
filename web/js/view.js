@@ -1,11 +1,11 @@
 // The event's front page: status and countdown, join or play/results button, the live scoreboard (refreshes every 5 s).
 import { $, el } from './dom.js';
-import { eventBase, eventSlug, eventUrl, getJson, postJson } from './api.js';
+import { eventBase, eventRef, eventUrl, getJson, postJson, rememberHunt } from './api.js';
 import { createStatusLine } from './clock.js';
 import { renderScoreboard } from './scoreboard-table.js';
 
-const slug = eventSlug();
-const base = eventBase(slug);
+const ref = eventRef();
+const base = eventBase(ref);
 const status = createStatusLine($('[data-testid="status"]'));
 const joinForm = $('#join-form');
 const joinError = $('[data-testid="join-error"]');
@@ -42,7 +42,7 @@ function paintBoard() {
   $('[data-testid="no-teams"]').hidden = teams.length > 0;
   renderScoreboard($('#scoreboard'), {
     teams, questionTotal: board?.questionTotal ?? 0, own: me?.name ?? null,
-    linkTo: board?.resultsPublished ? (t) => eventUrl(slug, `results/?team=${t.number}`) : null,
+    linkTo: board?.resultsPublished ? (t) => eventUrl(ref, `results/?team=${t.number}`) : null,
   });
 }
 
@@ -55,6 +55,7 @@ async function refresh(first = false) {
   if (i.ok) { info = i.body; $('[data-testid="event-name"]').textContent = info.name; document.title = info.name; status.update(info); }
   if (b.ok) board = b.body;
   if (m) me = m.ok ? m.body : null;
+  if (me && info) rememberHunt(ref, info.name); // so the landing page can lead this phone back
   paintActions();
 }
 
@@ -67,7 +68,7 @@ joinForm.addEventListener('submit', async (event) => {
   button.disabled = true;
   const res = await postJson(`${base}/join`, { name: $('#team-name').value, code: $('#join-code').value });
   button.disabled = false;
-  if (res.ok) { await refresh(true); location.href = eventUrl(slug, 'play/'); return; }
+  if (res.ok) { await refresh(true); location.href = eventUrl(ref, 'play/'); return; }
   joinError.textContent = res.status === 0 ? 'Could not send. Check your connection and try again.' : (JOIN_ERRORS[res.body?.error] ?? 'Something went wrong. Please try again.');
   joinError.dataset.error = res.body?.error ?? 'network';
   joinError.hidden = false;

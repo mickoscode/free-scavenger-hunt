@@ -1,12 +1,12 @@
 // The play page: team number and name, status and countdown, instructions, zone tiles and question forms.
 import { $, el } from './dom.js';
-import { eventBase, eventSlug, eventUrl, getJson } from './api.js';
+import { eventBase, eventRef, eventUrl, getJson, rememberHunt } from './api.js';
 import { createStatusLine } from './clock.js';
 import { linkWhatsApp, renderMarkdown } from './markdown.js';
 import { createZones } from './zones.js';
 
-const slug = eventSlug();
-const base = eventBase(slug);
+const ref = eventRef();
+const base = eventBase(ref);
 const status = createStatusLine($('[data-testid="status"]'));
 const message = $('[data-testid="message"]');
 let info = null;
@@ -48,12 +48,13 @@ function paintPhase() {
 
 async function refresh() {
   const [i, m] = await Promise.all([getJson(`${base}/info`), getJson(`${base}/me`)]);
-  if (m.status === 401 || i.status === 400) { location.replace(eventUrl(slug)); return; }
+  if (m.status === 401 || i.status === 400) { location.replace(eventUrl(ref)); return; }
   if (!i.ok || !m.ok) return;
   info = i.body;
   me = m.body;
   document.title = `Team ${me.number} - ${info.name}`;
   paintTeam();
+  rememberHunt(ref, info.name);
   status.update(info);
   paintPhase();
 }

@@ -10,9 +10,11 @@ test('event admins only see and change their own events', async () => {
   const a = await createEvent(ann, { slug: 'anns-hunt' });
   const b = await createEvent(bob, { slug: 'bobs-hunt' });
 
-  assert.deepEqual((await ann.get('/api/admin/events')).body.events.map((e) => e.slug), ['anns-hunt']);
-  assert.deepEqual((await bob.get('/api/admin/events')).body.events.map((e) => e.slug), ['bobs-hunt']);
-  assert.deepEqual((await ann.get('/api/admin/events?all=1')).body.events.map((e) => e.slug), ['anns-hunt']); // ?all is for the site admin only
+  const mine = async (c, all = '') => (await c.get(`/api/admin/events${all}`)).body.events.map((e) => e.slug).filter((x) => x !== 'demo-hunt');
+  assert.deepEqual(await mine(ann), ['anns-hunt']);
+  assert.deepEqual(await mine(bob), ['bobs-hunt']);
+  assert.deepEqual(await mine(ann, '?all=1'), ['anns-hunt']); // ?all is for the site admin only
+  assert.equal((await ann.get('/api/admin/events?all=1')).body.events.every((e) => e.owner === 'ann'), true);
 
   const base = (id) => `/api/admin/events/${id}`;
   for (const [method, path, body] of [
@@ -32,14 +34,18 @@ test('team sessions never cross events, even with the same team name and number'
   const w = createWorld(GAME_START - 1000);
   const ann = await register(w, 'ann');
   const bob = await register(w, 'bob');
-  await createEvent(ann, { slug: 'one' });
-  await createEvent(bob, { slug: 'two' });
+  const one = await createEvent(ann, { slug: 'one' });
+  const two = await createEvent(bob, { slug: 'one' }); // the same hunt name under another organiser is a different hunt
+  assert.notEqual(one.org, two.org);
   const player = client(w, '8.8.8.8');
-  assert.equal((await player.post('/api/events/one/join', { name: 'Same Name' })).body.number, 1);
-  assert.equal((await player.get('/api/events/one/me')).status, 200);
-  assert.equal((await player.get('/api/events/two/me')).status, 401);
-  assert.equal((await client(w, '8.8.8.9').post('/api/events/two/join', { name: 'Same Name' })).body.number, 1);
-  assert.equal((await client(w).get('/api/events/one/scoreboard')).body.teams.length, 1);
+  assert.equal((await player.post(`${one.base}/join`, { name: 'Same Name' })).body.number, 1);
+  assert.equal((await player.get(`${one.base}/me`)).status, 200);
+  assert.equal((await player.get(`${two.base}/me`)).status, 401);
+  assert.equal((await client(w, '8.8.8.9').post(`${two.base}/join`, { name: 'Same Name' })).body.number, 1);
+  assert.equal((await client(w).get(`${one.base}/scoreboard`)).body.teams.length, 1);
+  assert.equal((await client(w).get(`/api/events/${two.org}/one/scoreboard`)).body.teams.length, 1);
+  assert.equal((await client(w).get(`/api/events/${one.org}/nosuch/scoreboard`)).body.error, 'no-event');
+  assert.equal((await client(w).get('/api/events/ABCD/one/scoreboard')).body.error, 'no-event'); // not a valid code
 });
 
 test('slugs are unique, validated, and an event limit applies per user', async () => {
@@ -49,7 +55,8 @@ test('slugs are unique, validated, and an event limit applies per user', async (
   assert.equal((await ann.post('/api/admin/events', { slug: 'Bad Slug', name: 'x' })).body.error, 'invalid-slug');
   assert.equal((await ann.post('/api/admin/events', { slug: 'a', name: 'x' })).body.error, 'invalid-slug');
   assert.equal((await ann.post('/api/admin/events', { slug: 'taken', name: 'x' })).status, 200);
-  assert.equal((await bob.post('/api/admin/events', { slug: 'taken', name: 'x' })).body.error, 'slug-taken');
+  assert.equal((await ann.post('/api/admin/events', { slug: 'taken', name: 'x' })).body.error, 'slug-taken'); // within one organiser
+  assert.equal((await bob.post('/api/admin/events', { slug: 'taken', name: 'x' })).status, 200); // another organiser may reuse the name
   for (let i = 1; i < 3; i++) await ann.post('/api/admin/events', { slug: `event-${i}`, name: 'x' }); // the default limit is 3 hunts
   assert.equal((await ann.post('/api/admin/events', { slug: 'one-too-many', name: 'x' })).body.error, 'event-limit');
   assert.equal((await ann.get('/api/admin/events')).body.canCreate, false);
@@ -63,12 +70,12 @@ test('the site admin sees everything, manages users, and can act on any event', 
   const ann = await register(w, 'ann', 'secret-garden-walk-9');
   const ev = await createEvent(ann, { slug: 'anns-hunt' });
 
-  assert.deepEqual((await boss.get('/api/admin/events?all=1')).body.events.map((e) => e.slug), ['anns-hunt']);
+  assert.deepEqual((await boss.get('/api/admin/events?all=1')).body.events.map((e) => e.slug).sort(), ['anns-hunt', 'demo-hunt']); // every hunt of every organiser
   assert.equal((await boss.get(`/api/admin/events/${ev.id}`)).status, 200);
   assert.equal((await boss.put(`/api/admin/events/${ev.id}/config`, { name: 'Edited', timeZone: 'Australia/Perth', day: '2026-11-14', start: '09:00', end: '12:00', teamNames: true })).status, 200);
 
   const users = (await boss.get('/api/site/users')).body.users;
-  assert.deepEqual(users.map((u) => [u.name, u.eventCount]), [['ann', 1], ['siteadmin', 0]]);
+  assert.deepEqual(users.map((u) => [u.name, u.eventCount]), [['ann', 2], ['siteadmin', 0]]); // her own hunt and the starter demo
   assert.equal((await ann.get('/api/site/users')).body.error, 'not-allowed'); // event admins cannot
 
   // suspend: their session stops working at once and they cannot log in
@@ -92,7 +99,7 @@ test('the site admin sees everything, manages users, and can act on any event', 
   // deleting a user deletes their events
   assert.equal((await boss.del('/api/site/users/ann', {})).body.error, 'invalid-request');
   assert.equal((await boss.del('/api/site/users/ann', { confirm: 'ann' })).status, 200);
-  assert.equal((await client(w).get('/api/events/anns-hunt')).body.error, 'no-event');
+  assert.equal((await client(w).get(`/api/events/${ev.org}/anns-hunt/info`)).body.error, 'no-event');
 });
 
 test('maps: uploads are checked by content and size, stored under the event, replaced and cleaned up', async () => {
@@ -156,7 +163,7 @@ test('duplicating a hunt copies settings, questions and maps (not teams), and re
   const png = Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), Buffer.alloc(100)]).toString('base64');
   const { map } = (await ann.post(`/api/admin/events/${ev.id}/zones/z1/map`, { thumb: png, full: png })).body;
   await ann.put(`/api/admin/events/${ev.id}/content`, sampleContent({ z1: map }));
-  await client(w, '5.5.5.5').post('/api/events/original/join', { name: 'Team A' });
+  await client(w, '5.5.5.5').post(`${ev.base}/join`, { name: 'Team A' });
 
   assert.equal((await bob.post(`/api/admin/events/${ev.id}/duplicate`, { slug: 'stolen', name: 'x' })).body.error, 'no-event');
   assert.equal((await ann.post(`/api/admin/events/${ev.id}/duplicate`, { slug: 'original', name: 'x' })).body.error, 'slug-taken');

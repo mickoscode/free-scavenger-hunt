@@ -23,12 +23,12 @@ export function rankTeams(teams, event) {
 export function publicRoutes(router, ctx) {
   const { store } = ctx;
   const load = async (req) => {
-    const event = await loadPublicEvent(ctx, req.params.slug);
+    const event = await loadPublicEvent(ctx, req.params.org, req.params.slug);
     return { event, ...(await eventState(ctx, event)) };
   };
 
-  // The game information. /info is the address the pages use: CloudFront caches exactly that path and /scoreboard (see
-  // terraform/site.tf), so it must stay free of anything personal. The bare address is kept for older callers.
+  // The game information. CloudFront caches exactly this path and /scoreboard (see terraform/site.tf), so it must stay free of
+  // anything personal.
   const gameInfo = async (req) => {
     const { event, game } = await load(req);
     return json(200, {
@@ -36,10 +36,10 @@ export function publicRoutes(router, ctx) {
       teamNames: event.teamNames !== false, joinCodeRequired: Boolean(event.joinCode), resultsPublished: Boolean(event.resultsPublished),
     }, { cache: CACHE_SECONDS });
   };
-  router.get('/api/events/:slug/info', gameInfo);
-  router.get('/api/events/:slug', gameInfo);
+  router.get('/api/events/:org/:slug/info', gameInfo);
+  router.get('/api/events/:org/:slug', gameInfo);
 
-  router.get('/api/events/:slug/scoreboard', async (req) => {
+  router.get('/api/events/:org/:slug/scoreboard', async (req) => {
     const { event, game, content } = await load(req);
     const teams = await store.listTeams(event.id);
     return json(200, {
@@ -51,7 +51,7 @@ export function publicRoutes(router, ctx) {
     }, { cache: CACHE_SECONDS });
   });
 
-  router.post('/api/events/:slug/join', async (req) => {
+  router.post('/api/events/:org/:slug/join', async (req) => {
     const { event, status } = await load(req);
     if (!can(status, 'join')) fail(409, 'not-joinable');
     const body = req.body ?? {};
@@ -71,7 +71,7 @@ export function publicRoutes(router, ctx) {
   });
 
   // Who am I, what have I done. Never cached.
-  router.get('/api/events/:slug/me', async (req) => {
+  router.get('/api/events/:org/:slug/me', async (req) => {
     const { event } = await load(req);
     const team = await requireTeam(ctx, req, event);
     const answers = await store.getAnswers(event.id, team.number);
@@ -84,7 +84,7 @@ export function publicRoutes(router, ctx) {
   });
 
   // Instructions any time; the zones and questions only while the game is active.
-  router.get('/api/events/:slug/play', async (req) => {
+  router.get('/api/events/:org/:slug/play', async (req) => {
     const { event, status, content } = await load(req);
     await requireTeam(ctx, req, event);
     return json(200, {
@@ -111,11 +111,11 @@ export function publicRoutes(router, ctx) {
     if (!(await store.putAnswer(event.id, team.number, answerKey(zoneId, questionId), rec))) fail(409, 'already-submitted');
     return json(200, { ok: true });
   }
-  router.post('/api/events/:slug/answer', (req) => submit(req, 'answer'));
-  router.post('/api/events/:slug/photo', (req) => submit(req, 'photo'));
+  router.post('/api/events/:org/:slug/answer', (req) => submit(req, 'answer'));
+  router.post('/api/events/:org/:slug/photo', (req) => submit(req, 'photo'));
 
   // A team's own results, with the answers: only once the results are published.
-  router.get('/api/events/:slug/results', async (req) => {
+  router.get('/api/events/:org/:slug/results', async (req) => {
     const { event, content } = await load(req);
     const team = await requireTeam(ctx, req, event);
     if (!event.resultsPublished) return json(200, { published: false });
@@ -124,7 +124,7 @@ export function publicRoutes(router, ctx) {
   });
 
   // Anybody's results, without answers, once published.
-  router.get('/api/events/:slug/results/team/:number', async (req) => {
+  router.get('/api/events/:org/:slug/results/team/:number', async (req) => {
     const { event, content } = await load(req);
     if (!event.resultsPublished) return json(200, { published: false });
     const team = /^\d{1,6}$/.test(req.params.number) ? await store.getTeam(event.id, +req.params.number) : null;
@@ -134,7 +134,7 @@ export function publicRoutes(router, ctx) {
   });
 
   // Lets the page know whether a browser has a team in this event (the join/play button).
-  router.get('/api/events/:slug/session', async (req) => {
+  router.get('/api/events/:org/:slug/session', async (req) => {
     const { event } = await load(req);
     return json(200, { joined: Boolean(await currentTeam(ctx, req, event)) });
   });

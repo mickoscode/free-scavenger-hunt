@@ -36,13 +36,13 @@ await check('home page is served with security headers', () => retry(async () =>
   assert.equal(r.headers.get('x-frame-options'), 'DENY');
 }));
 await check('hunt and admin addresses are rewritten to their pages', async () => {
-  assert.match((await call('GET', '/e/smoke-no-such-hunt/')).text, /data-testid="view-page"/);
+  assert.match((await call('GET', '/e/zzzz/smoke-no-such-hunt/')).text, /data-testid="view-page"/);
   assert.match((await call('GET', '/admin/')).text, /Organiser sign in/);
-  assert.equal((await call('GET', '/e/smoke-no-such-hunt')).status, 301);
+  assert.equal((await call('GET', '/e/zzzz/smoke-no-such-hunt')).status, 301);
   assert.equal((await call('GET', '/definitely-not-a-page.html')).status, 404);
 });
 await check('the API answers through CloudFront (Lambda and DynamoDB are wired up)', () => retry(async () => {
-  const r = await call('GET', '/api/events/smoke-no-such-hunt/info');
+  const r = await call('GET', '/api/events/abcd/smoke-no-such-hunt/info');
   assert.equal(r.status, 400, r.text);
   assert.equal(r.json.error, 'no-event');
   assert.equal((await call('GET', '/api/auth/me')).json.user, null);
@@ -53,6 +53,7 @@ const user = `smoke-${Math.random().toString(36).slice(2, 10)}`;
 const password = `smoke-${Math.random().toString(36).slice(2)}-pw`;
 const slug = `${user}-hunt`;
 let cleaned = false;
+let org; // the throwaway organiser's code
 let recoveryCodes = [];
 // A forgotten password is recovered with a recovery code (once), the old session ends, and the account is then deleted.
 async function cleanupOther(other, name) {
@@ -73,10 +74,26 @@ try {
     assert.match((await call('GET', '/api/auth/me')).text, new RegExp(user));
   });
   let id;
+  await check('a new organiser gets a code and a Demo Hunt with its pictures', async () => {
+    const me = (await call('GET', '/api/auth/me')).json.user;
+    assert.match(me.code, /^[a-z2-9]{4}$/);
+    const events = (await call('GET', '/api/admin/events')).json.events;
+    const demo = events.find((e) => e.slug === 'demo-hunt');
+    assert.ok(demo, 'the starter hunt exists');
+    assert.equal(demo.org, me.code);
+    assert.equal(demo.status, 'pre'); // opens 5 minutes after signup
+    const detail = (await call('GET', `/api/admin/events/${demo.id}`)).json;
+    assert.equal(detail.content.zones.length, 6);
+    const image = await fetch(base + detail.content.zones[0].map.thumb);
+    assert.equal(image.status, 200);
+    assert.equal(image.headers.get('content-type'), 'image/jpeg'); // the S3 assets bucket is served through CloudFront
+    assert.equal((await call('GET', `/api/events/${me.code}/demo-hunt/info`)).json.name, 'Demo Hunt');
+  });
   await check('an organiser can build a hunt', async () => {
     const created = await call('POST', '/api/admin/events', { slug, name: 'Smoke test hunt', timeZone: 'UTC' });
     assert.equal(created.status, 200, created.text);
     id = created.json.id;
+    org = created.json.org;
     const now = new Date();
     const day = now.toISOString().slice(0, 10);
     const hm = (d) => d.toISOString().slice(11, 16);
@@ -91,15 +108,15 @@ try {
   });
   const team = new Map();
   await check('a team can join, play and appear on the scoreboard', async () => {
-    const joined = await call('POST', `/api/events/${slug}/join`, { name: 'Smoke Team' }, team);
+    const joined = await call('POST', `/api/events/${org}/${slug}/join`, { name: 'Smoke Team' }, team);
     assert.equal(joined.status, 200, joined.text);
-    const play = await call('GET', `/api/events/${slug}/play`, undefined, team);
+    const play = await call('GET', `/api/events/${org}/${slug}/play`, undefined, team);
     assert.equal(play.json.zones.length, 1);
     assert.ok(!play.text.includes('"answers"'), 'answers must never reach a player');
-    assert.equal((await call('POST', `/api/events/${slug}/answer`, { zone: 'z1', question: 'q1', answer: '4' }, team)).status, 200);
-    assert.equal((await call('POST', `/api/events/${slug}/answer`, { zone: 'z1', question: 'q1', answer: '4' }, team)).json.error, 'already-submitted');
+    assert.equal((await call('POST', `/api/events/${org}/${slug}/answer`, { zone: 'z1', question: 'q1', answer: '4' }, team)).status, 200);
+    assert.equal((await call('POST', `/api/events/${org}/${slug}/answer`, { zone: 'z1', question: 'q1', answer: '4' }, team)).json.error, 'already-submitted');
     const board = await retry(async () => {
-      const b = await call('GET', `/api/events/${slug}/scoreboard`);
+      const b = await call('GET', `/api/events/${org}/${slug}/scoreboard`);
       assert.equal(b.json.teams[0]?.score, 5);
       return b;
     });
@@ -121,6 +138,6 @@ try {
 }
 await check('the throwaway account and its hunt were deleted', async () => {
   assert.ok(cleaned);
-  assert.equal((await call('GET', `/api/events/${slug}`)).json.error, 'no-event');
+  assert.equal((await call('GET', `/api/events/${org}/${slug}/info`)).json.error, 'no-event');
 });
 console.log('smoke test passed');

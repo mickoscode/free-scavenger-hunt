@@ -11,7 +11,9 @@
 </head>
 <body>
 <main class="container page" data-testid="results-page">
-  <p class="mb-2"><a href="../" data-testid="back-to-board">‹ view scoreboard</a></p>
+  <nav class="player-nav" aria-label="Game">
+    <a class="btn btn-outline-primary" href="../" data-testid="back-to-board">‹ Scoreboard</a>
+  </nav>
   <p data-testid="not-ready" class="alert alert-info" hidden>The final results are not ready yet. They will be published soon!</p>
   <p data-testid="not-found" class="alert alert-warning" hidden>That team was not found.</p>
   <div id="results" data-testid="results"></div>

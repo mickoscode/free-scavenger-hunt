@@ -11,8 +11,8 @@ export function renderNav(user) {
   const nav = $('#nav');
   const links = [el('a', { class: 'navbar-brand fw-semibold', href: '/admin/' }, 'Free Scavenger Hunt')];
   const right = el('div', { class: 'd-flex align-items-center gap-3 ms-auto' });
-  right.append(el('a', { href: '/admin/', 'data-testid': 'nav-events' }, 'My hunts'));
-  if (user.role === 'site-admin') right.append(el('a', { href: '/admin/site/', 'data-testid': 'nav-site' }, 'Site'));
+  right.append(el('a', { class: 'btn btn-sm btn-outline-primary', href: '/admin/', 'data-testid': 'nav-events' }, 'My hunts'));
+  if (user.role === 'site-admin') right.append(el('a', { class: 'btn btn-sm btn-outline-primary', href: '/admin/site/', 'data-testid': 'nav-site' }, 'Site'));
   right.append(el('span', { class: 'text-muted small', 'data-testid': 'nav-user' }, user.name));
   const out = el('button', { type: 'button', class: 'btn btn-sm btn-outline-secondary', 'data-testid': 'logout' }, 'Sign out');
   out.addEventListener('click', async () => { await postJson('/api/auth/logout'); location.href = '/admin/'; });

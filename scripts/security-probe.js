@@ -17,7 +17,7 @@ let n = 0;
 const check = async (name, fn) => { await fn(); console.log(`ok ${++n} - ${name}`); };
 
 await check('security headers on successful pages and API responses (added by the CloudFront function)', async () => {
-  for (const path of ['/', '/admin/', '/e/some-hunt/', '/api/auth/me']) {
+  for (const path of ['/', '/admin/', '/e/abcd/some-hunt/', '/api/auth/me']) {
     const r = await get(site + path);
     const h = r.headers;
     assert.match(h.get('content-security-policy') ?? '', /default-src 'none'.*script-src 'self'.*frame-ancestors 'none'/, `${path} CSP`);
@@ -28,7 +28,7 @@ await check('security headers on successful pages and API responses (added by th
   }
 });
 await check('API error responses carry their own security headers (CloudFront adds none to errors)', async () => {
-  for (const path of ['/api/events/none/info', '/api/events/none', '/api/admin/events', '/api/nope']) {
+  for (const path of ['/api/events/abcd/none/info', '/api/events/abcd/none', '/api/admin/events', '/api/nope']) {
     const r = await get(site + path);
     assert.ok(r.status >= 400, path);
     assert.equal(r.headers.get('x-content-type-options'), 'nosniff', `${path} nosniff`);
@@ -69,7 +69,7 @@ await check('error responses reveal nothing about the stack', async () => {
 });
 if (direct) {
   await check('the raw API address refuses every call, even with a forged client address', async () => {
-    for (const [method, path] of [['GET', '/api/auth/me'], ['GET', '/api/events/anything'], ['POST', '/api/auth/login']]) {
+    for (const [method, path] of [['GET', '/api/auth/me'], ['GET', '/api/events/abcd/anything/info'], ['POST', '/api/auth/login']]) {
       const r = await get(direct + path, { method, headers: { 'x-forwarded-for': '1.2.3.4', 'content-type': 'application/json', 'x-origin-verify': 'guess' }, body: method === 'POST' ? '{}' : undefined });
       assert.equal(r.status, 400, `${method} ${path}`);
       assert.equal((await r.json()).error, 'unknown-route');

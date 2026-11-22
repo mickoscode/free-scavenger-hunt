@@ -1,6 +1,7 @@
 // Things the route modules share: the caller (admin session, team session), the event a request is about.
 import { cookie, fail, parseCookies } from './http.js';
-import { randomToken, safeEqual, sha256 } from './lib/passwords.js';
+import { isOrgCode, orgCode, randomToken, safeEqual, sha256 } from './lib/passwords.js';
+import { isBlocked } from './lib/teams.js';
 import { describeGame, gameStatus } from './lib/gamestate.js';
 
 export const ADMIN_COOKIE = 'fsh_admin';
@@ -44,8 +45,24 @@ export async function loadManagedEvent(ctx, user, id) {
   return event;
 }
 
-export async function loadPublicEvent(ctx, slug) {
-  return (await ctx.store.getEventBySlug(slug)) ?? fail(400, 'no-event');
+export async function loadPublicEvent(ctx, org, slug) {
+  return (isOrgCode(org) && (await ctx.store.getEventBySlug(org, slug))) || fail(400, 'no-event');
+}
+
+// Every account has a 4 character organiser code (the first part of its hunts' addresses). Accounts made before codes existed
+// (the site admin) get one the first time it is needed.
+export async function orgCodeFor(ctx, user) {
+  if (user.code) return user.code;
+  for (let i = 0; i < 50; i++) {
+    const code = orgCode();
+    if (isBlocked(code)) continue;
+    if (await ctx.store.claimOrgCode(code, user.name)) {
+      await ctx.store.putUser({ ...(await ctx.store.getUser(user.name)), code });
+      user.code = code;
+      return code;
+    }
+  }
+  throw new Error('no free organiser code');
 }
 
 export async function eventState(ctx, event) {

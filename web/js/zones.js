@@ -90,7 +90,9 @@ export function createZones({ container, base, onSubmitted }) {
     button.disabled = false;
   }
 
-  function buildQuestion(zone, q) {
+  const numberLabel = (zone, n) => el('div', { class: 'q-number', 'data-testid': 'q-number' }, `Question ${n} of ${zone.questions.length}`);
+
+  function buildQuestion(zone, q, n) {
     const form = el('form', { class: 'card card-body mb-3', novalidate: true, 'data-testid': 'question', 'data-question': q.id, 'data-state': 'open' });
     const inputId = `a-${zone.id}-${q.id}`;
     const input = el('input', {
@@ -104,6 +106,7 @@ export function createZones({ container, base, onSubmitted }) {
     const error = el('p', { class: 'text-danger mt-2 mb-0', role: 'alert', 'data-testid': 'form-error' });
     error.hidden = true;
     form.append(
+      numberLabel(zone, n),
       el('div', { class: 'd-flex justify-content-between gap-2' }, el('label', { for: inputId, class: 'fw-semibold' }, q.text), el('span', { class: 'text-muted small text-nowrap' }, `${q.score} pts`)),
       input,
       el('div', { class: 'd-flex align-items-center gap-2' }, el('button', { type: 'submit', class: 'btn btn-primary mt-2', 'data-testid': 'answer-submit' }, 'Submit'), badge),
@@ -116,7 +119,7 @@ export function createZones({ container, base, onSubmitted }) {
     return form;
   }
 
-  function buildPhoto(zone, photo, index, count) {
+  function buildPhoto(zone, photo, index, count, n) {
     const form = el('form', { class: 'card card-body mb-3 border-primary', novalidate: true, 'data-testid': 'photo', 'data-question': photo.id, 'data-state': 'open' });
     const badge = el('span', { class: 'badge text-bg-success fs-6', 'data-testid': 'done-badge' }, 'Done');
     badge.hidden = true;
@@ -125,6 +128,7 @@ export function createZones({ container, base, onSubmitted }) {
     const openGroup = el('a', { class: 'btn btn-outline-success btn-sm mb-2 align-self-start', target: '_blank', rel: 'noopener noreferrer', 'data-testid': 'whatsapp-open' }, 'Open WhatsApp group');
     openGroup.hidden = true;
     form.append(
+      numberLabel(zone, n),
       el('div', { class: 'fw-semibold' }, `Photo challenge${count > 1 ? ` ${index + 1}` : ''} (${photo.score} pts)`),
       el('p', { class: 'my-2', 'data-testid': 'photo-challenge' }, photo.text),
       openGroup,
@@ -141,7 +145,9 @@ export function createZones({ container, base, onSubmitted }) {
   function buildTile(zone) {
     const tile = el('button', { type: 'button', class: 'card h-100 w-100 text-start p-0 zone-tile', 'data-testid': 'zone-tile', 'data-zone': zone.id });
     if (zone.map) tile.append(el('img', { src: zone.map.thumb, alt: `Map of ${zone.name}`, class: 'card-img-top', loading: 'lazy' }));
-    tile.append(el('div', { class: 'card-body p-2' }, el('div', { class: 'fw-semibold team-name', 'data-testid': 'zone-name' }, zone.name), el('div', { class: 'small text-muted', 'data-testid': 'zone-progress' })));
+    tile.append(el('div', { class: 'card-body p-2 d-flex align-items-center gap-2' },
+      el('div', { class: 'flex-grow-1 min-w-0' }, el('div', { class: 'fw-semibold team-name', 'data-testid': 'zone-name' }, zone.name), el('div', { class: 'small text-muted', 'data-testid': 'zone-progress' })),
+      el('span', { class: 'tile-chevron', 'aria-hidden': 'true' }, '›')));
     tile.addEventListener('click', () => { location.hash = zone.id; });
     return tile;
   }
@@ -164,7 +170,7 @@ export function createZones({ container, base, onSubmitted }) {
       mapButton.addEventListener('click', () => { opener = mapButton; overlayImage.src = zone.map.full; overlay.hidden = false; closeButton.focus(); });
       parts.push(mapButton, el('p', { class: 'small text-muted mt-1 mb-3' }, 'Tap the map to enlarge it.'));
     }
-    for (const q of zone.questions) parts.push(isPhoto(q) ? buildPhoto(zone, q, photos.indexOf(q), photos.length) : buildQuestion(zone, q));
+    zone.questions.forEach((q, i) => parts.push(isPhoto(q) ? buildPhoto(zone, q, photos.indexOf(q), photos.length, i + 1) : buildQuestion(zone, q, i + 1)));
     parts.push(backBottom);
     panel.append(...parts);
     return panel;
