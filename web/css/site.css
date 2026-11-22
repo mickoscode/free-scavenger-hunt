@@ -145,3 +145,18 @@ body.home { background: #fffdf8; }
 .perks { list-style: none; padding: 0; margin: 0 0 1rem; display: grid; gap: .35rem; font-size: .95rem; }
 .perks li { background: #f3fcf8; border-radius: .6rem; padding: .35rem .6rem; }
 @media (max-width: 575px) { .auth-hero .float { display: none; } }
+
+/* ---- the signed-in organiser bar: phone first (two rows), one row from 576px ---- */
+.admin-bar { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: .4rem .75rem; padding-top: .55rem; padding-bottom: .55rem; }
+.admin-brand { grid-column: 1; grid-row: 1; min-width: 0; font-weight: 800; font-size: 1rem; line-height: 1.15; color: var(--fsh-blue); text-decoration: none; overflow-wrap: anywhere; }
+.admin-brand:hover { color: #0a58ca; }
+.admin-user { grid-column: 2; grid-row: 1; max-width: 9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #6c757d; font-size: .85rem; }
+.admin-links { grid-column: 1; grid-row: 2; display: flex; flex-wrap: wrap; gap: .4rem; }
+.admin-signout { grid-column: 2; grid-row: 2; white-space: nowrap; }
+@media (min-width: 576px) {
+  .admin-bar { display: flex; gap: .75rem 1rem; }
+  .admin-brand { flex: 0 1 auto; font-size: 1.1rem; }
+  .admin-links { order: 2; margin-left: auto; }
+  .admin-user { order: 3; max-width: 14rem; }
+  .admin-signout { order: 4; }
+}

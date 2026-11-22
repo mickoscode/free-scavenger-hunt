@@ -7,17 +7,18 @@ export async function loadSession() {
   return { user: res.body?.user ?? null, registrationOpen: res.body?.registrationOpen ?? true };
 }
 
+// The organiser bar. On a phone it is two short rows (brand and name, then the buttons) so nothing runs off the screen; on a wider
+// screen it is one row. The brand may wrap rather than push the buttons out of sight.
 export function renderNav(user) {
   const nav = $('#nav');
-  const links = [el('a', { class: 'navbar-brand fw-semibold', href: '/admin/' }, 'Free Scavenger Hunt')];
-  const right = el('div', { class: 'd-flex align-items-center gap-3 ms-auto' });
-  right.append(el('a', { class: 'btn btn-sm btn-outline-primary', href: '/admin/', 'data-testid': 'nav-events' }, 'My hunts'));
-  if (user.role === 'site-admin') right.append(el('a', { class: 'btn btn-sm btn-outline-primary', href: '/admin/site/', 'data-testid': 'nav-site' }, 'Site'));
-  right.append(el('span', { class: 'text-muted small', 'data-testid': 'nav-user' }, user.name));
-  const out = el('button', { type: 'button', class: 'btn btn-sm btn-outline-secondary', 'data-testid': 'logout' }, 'Sign out');
+  const brand = el('a', { class: 'admin-brand', href: '/admin/', 'data-testid': 'admin-brand' }, el('span', { 'aria-hidden': 'true' }, '🧭 '), 'Free Scavenger Hunt');
+  const links = el('div', { class: 'admin-links' },
+    el('a', { class: 'btn btn-sm btn-outline-primary', href: '/admin/', 'data-testid': 'nav-events' }, 'My hunts'),
+    ...(user.role === 'site-admin' ? [el('a', { class: 'btn btn-sm btn-outline-primary', href: '/admin/site/', 'data-testid': 'nav-site' }, 'Site')] : []));
+  const who = el('span', { class: 'admin-user', title: user.name, 'data-testid': 'nav-user' }, user.name);
+  const out = el('button', { type: 'button', class: 'btn btn-sm btn-outline-secondary admin-signout', 'data-testid': 'logout' }, 'Sign out');
   out.addEventListener('click', async () => { await postJson('/api/auth/logout'); location.href = '/admin/'; });
-  right.append(out);
-  nav.replaceChildren(el('div', { class: 'container py-2 d-flex align-items-center gap-3' }, ...links, right));
+  nav.replaceChildren(el('div', { class: 'container admin-bar' }, brand, who, links, out));
   nav.hidden = false;
 }
 

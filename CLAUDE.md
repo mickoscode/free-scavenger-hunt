@@ -51,3 +51,7 @@ The detailed security review (residual risks, cost-abuse economics, open items) 
 
 - `web/index.html` keeps the owner's original wording (pitch, joining box, three steps): decorate around it, never rewrite it. `web/about/index.html` is the owner's personal story in their voice: do not invent biography, and keep every privacy/cost claim true (verified 2026-11-22: CloudFront, API Gateway and WAF logging are off; the Lambda logs only timing lines).
 - Pages may link out only with `rel="noopener"`; nothing they load may come from another origin (`tests/unit/frontend.test.js`).
+
+## Phones
+
+- Every page, signed-in organiser pages included, must fit a 360 px wide Android phone with nothing off the right edge and every bar button on screen (`tests/browser/admin-phone.test.js`, `site-pages.test.js`). Measure element edges, not `scrollWidth`: phone emulation silently zooms out to hide the overflow. When you add a page or a bar, add it to those tests.
