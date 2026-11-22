@@ -41,7 +41,7 @@ test('Share this hunt: link, copy, QR download and print sheet, on desktop and a
           assert.equal(await page.locator('#print-sheet img').count(), 1);
         }
         await page.click(tid('share-close'));
-        assert.equal(await page.locator(tid('share-dialog')).count(), 0);
+        await page.waitForSelector(tid('share-dialog'), { state: 'detached' });
       }
     }
     assert.deepEqual(h.errors, []);
