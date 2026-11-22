@@ -9,7 +9,7 @@ Everything an organiser needs is **inside the site**: no files to upload from an
 | Role | Who | Can |
 |---|---|---|
 | **Site admin** | The owner of the site (one account, created by `scripts/create-site-admin.js`) | Everything: see and manage every hunt, suspend or delete organisers, reset passwords, set each organiser's hunt limit, close or open registration |
-| **Event admin** (organiser) | Anyone who registers (username + password, no email) | Create, edit, run and delete **their own** hunts (default limit 5) |
+| **Event admin** (organiser) | Anyone who registers (username + password, no email) | Create, edit, run and delete **their own** hunts (default limit 3) |
 | **Player** | Anyone with a hunt's link | Join as a team, play, see the scoreboard and results. No account |
 | **Viewer** | Anyone | See the scoreboard only |
 
@@ -48,7 +48,7 @@ Users table (hunt count and limit, suspend / activate, reset password to a one-t
 
 ## Limits and abuse protection
 
-20 zones per hunt, 30 questions per zone, content at most 256 KB, instructions 20 KB, map images 500 KB, 300 teams per hunt, 5 hunts per organiser (site admin can change). Rate limits: 5 registrations per hour per address and 60 per hour overall; 8 wrong passwords per 15 minutes per username; 30 joins per hour per address per hunt. API Gateway throttles at 100 requests per second sustained, burst 300 (cached scoreboard reads do not count).
+20 zones per hunt, 30 questions per zone, content at most 256 KB, instructions 20 KB, map images 500 KB, 300 teams per hunt, 3 hunts per organiser (site admin can change), 60 MB of uploaded pictures per hunt. Rate limits: 4 registrations per hour per address and 30 per hour overall; 8 wrong passwords per 15 minutes per username; 30 joins per hour per address per hunt. API Gateway throttles at 25 requests per second sustained, burst 60 (cached scoreboard reads do not count); see `docs/security.md` for why this is also the cost ceiling.
 
 ## Security model
 

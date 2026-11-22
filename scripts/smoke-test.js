@@ -53,26 +53,24 @@ const user = `smoke-${Math.random().toString(36).slice(2, 10)}`;
 const password = `smoke-${Math.random().toString(36).slice(2)}-pw`;
 const slug = `${user}-hunt`;
 let cleaned = false;
+let recoveryCodes = [];
+// A forgotten password is recovered with a recovery code (once), the old session ends, and the account is then deleted.
+async function cleanupOther(other, name) {
+  assert.equal(recoveryCodes.length, 8);
+  const fresh = new Map();
+  const next = `${password}-new`;
+  const rec = await call('POST', '/api/auth/recover', { username: name, code: recoveryCodes[0], next }, fresh);
+  assert.equal(rec.status, 200, rec.text);
+  assert.equal(rec.json.user.recoveryCodesLeft, 7);
+  assert.equal((await call('GET', '/api/auth/me', undefined, other)).json.user, null); // the old session ended
+  assert.equal((await call('POST', '/api/auth/recover', { username: name, code: recoveryCodes[0], next }, new Map())).json.error, 'invalid-recovery'); // single use
+  assert.equal((await call('POST', '/api/auth/delete', { password: next }, fresh)).status, 200);
+}
 try {
   await check('an organiser can register', async () => {
     const r = await call('POST', '/api/auth/register', { username: user, password });
     assert.equal(r.status, 200, r.text);
     assert.match((await call('GET', '/api/auth/me')).text, new RegExp(user));
-  });
-  await check('a forgotten password can be recovered with a recovery code, once', async () => {
-    const jar2 = new Map();
-    const name = `${user}-r`.slice(0, 30);
-    const reg = await call('POST', '/api/auth/register', { username: name, password }, jar2);
-    assert.equal(reg.status, 200, reg.text);
-    assert.equal(reg.json.recoveryCodes.length, 8);
-    const fresh = new Map();
-    const next = `${password}-new`;
-    const rec = await call('POST', '/api/auth/recover', { username: name, code: reg.json.recoveryCodes[0], next }, fresh);
-    assert.equal(rec.status, 200, rec.text);
-    assert.equal(rec.json.user.recoveryCodesLeft, 7);
-    assert.equal((await call('GET', '/api/auth/me', undefined, jar2)).json.user, null); // the old session ended
-    assert.equal((await call('POST', '/api/auth/recover', { username: name, code: reg.json.recoveryCodes[0], next }, new Map())).json.error, 'invalid-recovery');
-    assert.equal((await call('POST', '/api/auth/delete', { password: next }, fresh)).status, 200);
   });
   let id;
   await check('an organiser can build a hunt', async () => {
@@ -108,12 +106,14 @@ try {
     assert.equal(board.json.teams[0].name, 'Smoke Team');
     assert.equal(board.json.resultsPublished, false);
   });
-  await check('another organiser cannot see this hunt', async () => {
+  await check('another organiser cannot see this hunt, and a forgotten password is recoverable with a code, once', async () => {
     const other = new Map();
     const name = `${user}-b`.slice(0, 30);
-    assert.equal((await call('POST', '/api/auth/register', { username: name, password }, other)).status, 200);
+    const reg = await call('POST', '/api/auth/register', { username: name, password }, other);
+    assert.equal(reg.status, 200, reg.text);
+    recoveryCodes = reg.json.recoveryCodes;
     assert.equal((await call('GET', `/api/admin/events/${id}`, undefined, other)).json.error, 'no-event');
-    assert.equal((await call('POST', '/api/auth/delete', { password }, other)).status, 200);
+    await cleanupOther(other, name);
   });
 } finally {
   const r = await call('POST', '/api/auth/delete', { password });

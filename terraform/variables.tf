@@ -16,13 +16,13 @@ variable "github_oidc_subject_prefix" {
 }
 
 variable "api_throttle_rate_limit" {
-  description = "Sustained requests per second the API accepts (all hunts together). Cached scoreboard reads do not count."
+  description = "Sustained requests per second the API accepts (all hunts together). Cached scoreboard reads do not count. Also the ceiling on what an attack can cost: see docs/security.md (cost exposure) before raising it."
   type        = number
-  default     = 100
+  default     = 25
 }
 
 variable "api_throttle_burst_limit" {
   description = "Burst of requests the API accepts (the moment everyone loads the game at the start)."
   type        = number
-  default     = 300
+  default     = 60
 }

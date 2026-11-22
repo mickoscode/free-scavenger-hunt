@@ -60,7 +60,7 @@ test('guessing from many addresses is capped per account; successful logins do n
 
 test('registration is limited per address, and can be closed by the site admin', async () => {
   const w = createWorld();
-  for (let i = 0; i < 5; i++) assert.equal((await client(w, '3.3.3.3').post('/api/auth/register', { username: `user${i}x`, password: 'long-enough-pass' })).status, 200);
+  for (let i = 0; i < 4; i++) assert.equal((await client(w, '3.3.3.3').post('/api/auth/register', { username: `user${i}x`, password: 'long-enough-pass' })).status, 200);
   assert.equal((await client(w, '3.3.3.3').post('/api/auth/register', { username: 'user9x', password: 'long-enough-pass' })).status, 429);
 
   const { name, password } = await seedSiteAdmin(w);

@@ -9,7 +9,7 @@ import { hashPassword, hashRecoveryCode, isReservedUsername, newRecoverySet, pas
 import { isBlocked } from './lib/teams.js';
 
 const USERNAME = /^[a-z0-9][a-z0-9_-]{2,29}$/;
-export const DEFAULT_MAX_EVENTS = 5;
+export const DEFAULT_MAX_EVENTS = 3;
 const MAX_NOTICES = 5;
 
 // What a signed in user may know about their own account. Never the hashes.
@@ -33,7 +33,7 @@ export function authRoutes(router, ctx) {
     if (!USERNAME.test(name) || isBlocked(name) || isReservedUsername(name)) fail(400, 'invalid-username');
     const weak = passwordProblem(password, name);
     if (weak) fail(400, weak);
-    if ((await store.bumpRate(`reg-ip#${clientKey(req)}`, 3600)) > 5 || (await store.bumpRate('reg-all', 3600)) > 60) fail(429, 'too-many-requests');
+    if ((await store.bumpRate(`reg-ip#${clientKey(req)}`, 3600)) > 4 || (await store.bumpRate('reg-all', 3600)) > 30) fail(429, 'too-many-requests');
     const recovery = newRecoverySet(name);
     const user = {
       name, role: 'event-admin', status: 'active', maxEvents: DEFAULT_MAX_EVENTS, sessionGen: 0,

@@ -50,7 +50,7 @@ test('slugs are unique, validated, and an event limit applies per user', async (
   assert.equal((await ann.post('/api/admin/events', { slug: 'a', name: 'x' })).body.error, 'invalid-slug');
   assert.equal((await ann.post('/api/admin/events', { slug: 'taken', name: 'x' })).status, 200);
   assert.equal((await bob.post('/api/admin/events', { slug: 'taken', name: 'x' })).body.error, 'slug-taken');
-  for (let i = 1; i < 5; i++) await ann.post('/api/admin/events', { slug: `event-${i}`, name: 'x' });
+  for (let i = 1; i < 3; i++) await ann.post('/api/admin/events', { slug: `event-${i}`, name: 'x' }); // the default limit is 3 hunts
   assert.equal((await ann.post('/api/admin/events', { slug: 'one-too-many', name: 'x' })).body.error, 'event-limit');
   assert.equal((await ann.get('/api/admin/events')).body.canCreate, false);
 });
