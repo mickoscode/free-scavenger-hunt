@@ -5,46 +5,97 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Free Scavenger Hunt</title>
   <meta name="description" content="Create and run a free scavenger hunt for your school, club or community. Teams join on their phones, answer questions and race the clock.">
+  <meta property="og:title" content="Free Scavenger Hunt">
+  <meta property="og:description" content="Run a scavenger hunt for your school, club or community. No apps, no cost.">
+  <meta property="og:type" content="website">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/css/bootstrap.min.css">
   <link rel="stylesheet" href="/css/site.css">
 </head>
-<body>
-<main class="container page">
-  <section class="card card-body border-success mb-3" id="continue-card" data-testid="continue-card" hidden>
-    <h2 class="h5 mb-1">You have a game in progress</h2>
-    <p class="mb-2" id="continue-name"></p>
-    <a class="btn btn-success btn-lg" id="continue-link" data-testid="continue-link" href="/">Return to your game</a>
-  </section>
-  <section class="hero text-center">
-    <h1 class="display-5 fw-bold">Free Scavenger Hunt</h1>
-    <p class="lead">Run a scavenger hunt for your school, club or community. Teams join on their phones, answer questions around your venue and race the clock. No apps, no cost.</p>
-    <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
-      <a class="btn btn-primary btn-lg" href="/admin/" data-testid="create-link">Create your hunt</a>
-      <a class="btn btn-outline-primary btn-lg" href="/admin/" data-testid="signin-link">Organiser sign in</a>
+<body class="home">
+<header class="site-header">
+  <div class="container site-header-inner">
+    <a class="site-brand" href="/"><span aria-hidden="true">🧭</span> Free Scavenger Hunt</a>
+    <nav class="site-nav" aria-label="Site">
+      <a href="/about/" data-testid="about-link">About</a>
+      <a class="btn btn-sm btn-outline-primary" href="/admin/" data-testid="header-signin"><span class="d-none d-sm-inline">Organiser </span>Sign in</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="container page-narrow">
+    <section class="card card-body border-success mt-3" id="continue-card" data-testid="continue-card" hidden>
+      <h2 class="h5 mb-1">You have a game in progress</h2>
+      <p class="mb-2" id="continue-name"></p>
+      <a class="btn btn-success btn-lg" id="continue-link" data-testid="continue-link" href="/">Return to your game</a>
+    </section>
+  </div>
+
+  <section class="home-hero">
+    <span class="float float-1" aria-hidden="true">📍</span>
+    <span class="float float-2" aria-hidden="true">⭐</span>
+    <span class="float float-3" aria-hidden="true">🔍</span>
+    <span class="float float-4" aria-hidden="true">🏃</span>
+    <div class="container">
+      <div class="row align-items-center g-4">
+        <div class="col-lg-7 text-center text-lg-start">
+          <h1 class="display-5 fw-bold hero-title">Free Scavenger Hunt</h1>
+          <p class="lead">Run a scavenger hunt for your school, club or community. Teams join on their phones, answer questions around your venue and race the clock. No apps, no cost.</p>
+          <div class="d-grid gap-2 d-sm-flex flex-sm-wrap justify-content-sm-center justify-content-lg-start">
+            <a class="btn btn-primary btn-lg text-nowrap" href="/admin/" data-testid="create-link">Create your hunt</a>
+            <a class="btn btn-outline-primary btn-lg text-nowrap" href="/admin/" data-testid="signin-link">Organiser sign in</a>
+          </div>
+        </div>
+        <div class="col-lg-5">
+          <img class="hero-art" src="/img/trail.svg" width="640" height="400" alt="">
+        </div>
+      </div>
     </div>
   </section>
 
-  <section class="card card-body mb-4">
-    <h2 class="h5">Joining a hunt?</h2>
-    <p class="mb-2">Scan the QR code your organiser gave you, or type the hunt's address below (for example <strong>ab3k/beach-hunt</strong>).</p>
-    <form id="find-form" class="row g-2" novalidate>
-      <div class="col-12 col-sm"><label class="visually-hidden" for="slug">Hunt name</label>
-        <div class="input-group"><span class="input-group-text">/e/</span><input id="slug" class="form-control form-control-lg" autocomplete="off" autocapitalize="off" placeholder="ab3k/beach-hunt" data-testid="slug-input"></div></div>
-      <div class="col-12 col-sm-auto"><button class="btn btn-primary btn-lg w-100" type="submit" data-testid="find-button">Go</button></div>
-    </form>
-    <p class="text-danger mt-2 mb-0" id="find-error" hidden role="alert">Type the code and name from your organiser, like ab3k/beach-hunt.</p>
-  </section>
+  <div class="container page-narrow">
+    <ul class="chips" aria-label="What you get">
+      <li class="chip"><span aria-hidden="true">🗺️</span> Zones &amp; maps</li>
+      <li class="chip"><span aria-hidden="true">🧠</span> Quiz questions</li>
+      <li class="chip"><span aria-hidden="true">📸</span> Photo challenges</li>
+      <li class="chip"><span aria-hidden="true">🏆</span> Live scoreboard</li>
+      <li class="chip"><span aria-hidden="true">🎉</span> Free, no ads</li>
+    </ul>
 
-  <section>
-    <h2 class="h5">How it works</h2>
-    <ol class="steps">
-      <li><strong>Organisers</strong> create an event: zones with maps, questions (text, numbers or photo challenges), a start and finish time.</li>
-      <li><strong>Teams</strong> join by QR code, pick a team name, and answer in each zone while the clock runs.</li>
-      <li><strong>Everyone</strong> watches a live scoreboard. The organiser scores photos, then publishes the final results with a full breakdown for each team.</li>
-    </ol>
-  </section>
+    <section class="card card-body join-card mb-4">
+      <h2 class="h5">Joining a hunt?</h2>
+      <p class="mb-2">Scan the QR code your organiser gave you, or type the hunt's address below (for example <strong>ab3k/beach-hunt</strong>).</p>
+      <form id="find-form" class="row g-2" novalidate>
+        <div class="col-12 col-sm"><label class="visually-hidden" for="slug">Hunt name</label>
+          <div class="input-group"><span class="input-group-text">/e/</span><input id="slug" class="form-control form-control-lg" autocomplete="off" autocapitalize="off" placeholder="ab3k/beach-hunt" data-testid="slug-input"></div></div>
+        <div class="col-12 col-sm-auto"><button class="btn btn-primary btn-lg w-100" type="submit" data-testid="find-button">Go</button></div>
+      </form>
+      <p class="text-danger mt-2 mb-0" id="find-error" hidden role="alert">Type the code and name from your organiser, like ab3k/beach-hunt.</p>
+    </section>
+
+    <section class="how">
+      <h2 class="h4">How it works</h2>
+      <ol class="steps">
+        <li><strong>Organisers</strong> create an event: zones with maps, questions (text, numbers or photo challenges), a start and finish time.</li>
+        <li><strong>Teams</strong> join by QR code, pick a team name, and answer in each zone while the clock runs.</li>
+        <li><strong>Everyone</strong> watches a live scoreboard. The organiser scores photos, then publishes the final results with a full breakdown for each team.</li>
+      </ol>
+    </section>
+
+    <section class="about-teaser">
+      <p class="mb-2"><span aria-hidden="true">💙</span> Built by a volunteer, for volunteers and communities.</p>
+      <a class="btn btn-outline-primary" href="/about/" data-testid="about-teaser-link">Read why this site exists</a>
+    </section>
+  </div>
 </main>
+
+<footer class="site-footer">
+  <div class="container">
+    <span>Made with <span aria-hidden="true">❤️</span><span class="visually-hidden">love</span> in Perth, Western Australia</span>
+    <a href="/about/">About</a>
+  </div>
+</footer>
 <script type="module" src="/js/home.js"></script>
 </body>
 </html>

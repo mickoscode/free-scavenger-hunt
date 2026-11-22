@@ -75,3 +75,63 @@ a { text-underline-offset: .18em; }
 .admin-tabs .nav-link.active { font-weight: 700; color: var(--fsh-blue); border-bottom-color: var(--fsh-blue); }
 .admin-nav .navbar-brand { color: var(--fsh-blue); }
 .hero .btn-lg { min-width: 12rem; }
+
+/* ---- the front page and About page ---- */
+.page-narrow { max-width: 760px; }
+body.home { background: #fffdf8; }
+
+.site-header { background: #fff; border-bottom: 1px solid #e9ecef; }
+.site-header-inner { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding-top: .6rem; padding-bottom: .6rem; }
+.site-brand { font-weight: 800; font-size: 1.15rem; color: var(--fsh-blue); text-decoration: none; }
+.site-brand:hover { color: #0a58ca; }
+.site-nav { display: flex; align-items: center; gap: 1rem; }
+.site-nav a:not(.btn) { font-weight: 600; color: #343a40; }
+.site-nav a[aria-current="page"] { color: var(--fsh-blue); }
+
+.home-hero { position: relative; overflow: hidden; padding: 2.25rem 0 3rem; background: linear-gradient(135deg, #e7f1ff 0%, #fff3d9 55%, #ffe6f0 100%); border-radius: 0 0 2.25rem 2.25rem; }
+.home-hero > .container { position: relative; z-index: 1; }
+.hero-title { background: linear-gradient(90deg, #0d6efd 10%, #7048e8 55%, #e64980 100%); -webkit-background-clip: text; background-clip: text; color: #0d6efd; -webkit-text-fill-color: transparent; }
+.hero-art { display: block; width: 100%; height: auto; max-width: 560px; margin: 0 auto; border-radius: 1.5rem; box-shadow: 0 14px 34px rgba(13, 110, 253, .22); transform: rotate(1.5deg); }
+
+.float { position: absolute; font-size: 2rem; opacity: .55; pointer-events: none; user-select: none; animation: bob 6s ease-in-out infinite; }
+.float-1 { top: 10%; left: 4%; }
+.float-2 { top: 8%; right: 6%; animation-delay: -2s; font-size: 2.4rem; }
+.float-3 { bottom: 12%; left: 8%; animation-delay: -4s; }
+.float-4 { bottom: 8%; right: 5%; animation-delay: -1s; }
+@keyframes bob { 0%, 100% { transform: translateY(0) rotate(-4deg); } 50% { transform: translateY(-12px) rotate(4deg); } }
+@media (prefers-reduced-motion: reduce) { .float { animation: none; } .hero-art { transform: none; } }
+
+.chips { display: flex; flex-wrap: wrap; justify-content: center; gap: .5rem; list-style: none; padding: 0; margin: 1.6rem 0; }
+.chip { background: #fff; border: 1px solid #e3e8ef; border-radius: 999px; padding: .4rem .9rem; font-weight: 600; box-shadow: 0 1px 3px rgba(0, 0, 0, .08); }
+
+.join-card { border: 2px solid #cfe2ff; border-radius: 1rem; box-shadow: 0 4px 14px rgba(13, 110, 253, .1); }
+.how h2 { margin-bottom: .9rem; }
+.steps { list-style: none; counter-reset: step; padding: 0; margin: 0 0 1.5rem; }
+.steps li { counter-increment: step; position: relative; padding: 1rem 1rem 1rem 4rem; margin-bottom: .75rem; background: #fff; border-radius: 1rem; box-shadow: 0 1px 4px rgba(0, 0, 0, .1); }
+.steps li::before { content: counter(step); position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); width: 2.2rem; height: 2.2rem; border-radius: 50%; display: grid; place-items: center; color: #fff; font-weight: 800; background: #0d6efd; }
+.steps li:nth-child(2)::before { background: #12b886; }
+.steps li:nth-child(3)::before { background: #e64980; }
+
+.about-teaser { text-align: center; background: linear-gradient(135deg, #e7f1ff, #ffe6f0); border-radius: 1.25rem; padding: 1.5rem 1rem; margin: 2rem 0; }
+.site-footer { border-top: 1px solid #e9ecef; background: #fff; padding: 1.25rem 0; color: #6c757d; }
+.site-footer .container { display: flex; flex-wrap: wrap; justify-content: center; gap: .5rem 1.5rem; }
+
+.about-hero { background: linear-gradient(135deg, #e7f1ff 0%, #fff3d9 55%, #ffe6f0 100%); padding: 2.25rem 0; border-radius: 0 0 2.25rem 2.25rem; margin-bottom: 1rem; }
+.prose { padding-bottom: 3rem; }
+.prose h2 { font-size: 1.45rem; font-weight: 800; margin-top: 2.1rem; }
+.prose p, .prose li { font-size: 1.06rem; line-height: 1.65; }
+.about-card { border-radius: 1rem; border-width: 1px; }
+.about-yes { border-left: 5px solid #12b886; background: #f3fcf8; }
+.about-no { border-left: 5px solid #e64980; background: #fff5f8; }
+.about-signoff { text-align: center; margin-top: 2.5rem; padding: 1.75rem 1rem; background: linear-gradient(135deg, #fff3d9, #ffe6f0); border-radius: 1.25rem; }
+
+.site-brand { white-space: nowrap; }
+.site-nav .btn { white-space: nowrap; }
+@media (max-width: 575px) {
+  .site-brand { font-size: .92rem; }
+  .site-nav { gap: .6rem; }
+  .site-nav a:not(.btn) { font-size: .92rem; }
+  .site-nav .btn-sm { font-size: .8rem; padding: .3rem .5rem; min-height: 0; }
+  .site-header-inner { gap: .5rem; }
+  .home-hero { padding-top: 1.5rem; }
+}

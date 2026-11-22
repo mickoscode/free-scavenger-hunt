@@ -4,6 +4,12 @@ Free Scavenger Hunt is a website where **anyone can create and run a scavenger h
 
 Everything an organiser needs is **inside the site**: no files to upload from another repository, no tools to run. Zones, maps, questions, instructions and settings are all edited on the organiser pages.
 
+## Public pages
+
+- **Front page** (`/`): the site name and one-paragraph pitch, *Create your hunt* and *Organiser sign in* buttons, a *Joining a hunt?* box (type `code/hunt-name`), and a three-step *How it works*; dressed up with a gradient hero, a map-and-trail illustration, short feature chips and numbered step cards. A phone that left a game by accident also sees *Return to your game* at the top. The wording of the pitch, the joining box and the three steps is the owner's and is not to be changed without asking.
+- **About** (`/about/`): written in the owner's voice by their brief: why the site exists (playing outside with mates in the 80s), the surf club scavenger hunts that took a lot of writing and printing, the parkrun inspiration, why it is free (no ads, no fees, no premium tier), and exactly what is and is not kept (no email or real name, no analytics, tracking, ads, third-party scripts or visitor logs, nothing sold or shared), a link to the open source code, and "not affiliated" notes for the surf club and parkrun. Every privacy statement on it must stay true: check `docs/security.md` and the code before changing either.
+- Both pages share a header (About, Organiser sign in) and a footer ("Made in Perth, Western Australia").
+
 ## People
 
 | Role | Who | Can |

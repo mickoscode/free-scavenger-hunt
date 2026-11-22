@@ -20,7 +20,9 @@ test('every page is mobile friendly, titled, and has no inline script, style or 
     assert.doesNotMatch(html, /<style[\s>]/i, `${name}: inline style`);
     assert.doesNotMatch(html, /\sstyle\s*=/i, `${name}: style attribute`);
     assert.doesNotMatch(html, /\son[a-z]+\s*=/i, `${name}: event handler attribute`);
-    assert.doesNotMatch(html, /(src|href)="https?:\/\//i, `${name}: external resource`);
+    // nothing the page LOADS may come from elsewhere (scripts, styles, images, frames); a plain link out must be a safe one
+    assert.doesNotMatch(html, /<(script|link|img|iframe|source|embed|object)\b[^>]*\s(src|href)="(https?:)?\/\//i, `${name}: external resource`);
+    for (const m of html.matchAll(/<a\b[^>]*\shref="https?:\/\/[^"]*"[^>]*>/gi)) assert.match(m[0], /rel="[^"]*noopener/, `${name}: outbound link without noopener: ${m[0]}`);
   }
 });
 
