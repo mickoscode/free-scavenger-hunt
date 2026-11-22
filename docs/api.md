@@ -3,7 +3,7 @@
 JSON over HTTPS under `/api/`. Errors are `{ "error": "<code>" }`. Statuses: 200, 400 (invalid or unknown), 401 (not signed in / no team session), 405, 409 (wrong state), 429 (rate limited), 500. Bodies of POST/PUT/PATCH/DELETE must be `application/json`. Implementation: `api/` (routes in `api/routes-*.js`, rules in `api/lib/`).
 
 ## Accounts (`routes-auth.js`)
-`POST /api/auth/register {username,password}` · `POST /api/auth/login` · `POST /api/auth/logout` · `GET /api/auth/me` (`{user, registrationOpen}`) · `POST /api/auth/password {current,next}` · `POST /api/auth/delete {password}`
+`POST /api/auth/register {username,password}` (also returns `recoveryCodes`, once) · `POST /api/auth/login` · `POST /api/auth/recover {username,code,next}` · `POST /api/auth/recovery-codes {password}` (new set, shown once) · `POST /api/auth/notices/dismiss` · `POST /api/auth/logout` · `GET /api/auth/me` (`{user, registrationOpen}`) · `POST /api/auth/password {current,next}` · `POST /api/auth/delete {password}`
 
 ## Players (`routes-public.js`), `:slug` is the hunt's address
 | Route | Notes |

@@ -16,7 +16,15 @@ test('organiser builds a hunt, teams play it, results are published', async () =
     await a.fill(tid('reg-user'), 'ann');
     await a.fill(tid('reg-pass'), 'a-long-password-1');
     await a.click(tid('register-button'));
+    // the recovery codes are shown once and must be acknowledged
+    await a.waitForSelector(tid('codes-panel'));
+    assert.equal(await a.locator(tid('recovery-code')).count(), 8);
+    await h.shot(a, '01b-recovery-codes');
+    assert.equal(await a.isDisabled(tid('codes-continue')), true);
+    await a.check(tid('codes-saved'));
+    await a.click(tid('codes-continue'));
     await a.waitForSelector(tid('create-button'));
+    assert.match(await a.textContent('#recovery-status'), /8 recovery codes left/);
     await a.fill(tid('new-name'), 'Beach Hunt');
     assert.equal(await a.inputValue(tid('new-slug')), 'beach-hunt'); // suggested from the name
     await a.selectOption(tid('new-tz'), 'UTC');
@@ -183,6 +191,59 @@ test('organiser builds a hunt, teams play it, results are published', async () =
   }
 });
 
+test('forgetting the password: a recovery code gets the organiser back in, once', async () => {
+  const h = await launch();
+  try {
+    const first = await h.desktop('first');
+    const p = first.page;
+    await p.goto(h.url('/admin/'));
+    await p.fill(tid('reg-user'), 'carol');
+    await p.fill(tid('reg-pass'), 'the-first-password');
+    await p.click(tid('register-button'));
+    await p.waitForSelector(tid('codes-panel'));
+    const codes = await p.locator(tid('recovery-code')).allTextContents();
+    await p.check(tid('codes-saved'));
+    await p.click(tid('codes-continue'));
+    await p.waitForSelector(tid('create-button'));
+
+    // a different browser that has forgotten the password
+    const second = await h.desktop('second');
+    const q = second.page;
+    await q.goto(h.url('/admin/'));
+    await q.click(tid('forgot'));
+    await q.fill(tid('rec-user'), 'carol');
+    await q.fill(tid('rec-code'), codes[0].toLowerCase());
+    await q.fill(tid('rec-pass'), 'a-brand-new-password');
+    await h.shot(q, '30-recover');
+    await q.click(tid('recover-button'));
+    await q.waitForSelector(tid('create-button'));
+    assert.match(await q.textContent('#recovery-status'), /7 recovery codes left/);
+    assert.match(await q.textContent(tid('notices')), /recovery code was used/);
+    await h.shot(q, '31-after-recovery');
+    await q.click(tid('notice-dismiss'));
+
+    // the first browser's session ended, and the used code does not work again
+    await p.reload();
+    await p.waitForSelector(tid('login-button'));
+    await p.click(tid('forgot'));
+    await p.fill(tid('rec-user'), 'carol');
+    await p.fill(tid('rec-code'), codes[0]);
+    await p.fill(tid('rec-pass'), 'yet-another-password');
+    await p.click(tid('recover-button'));
+    await p.waitForSelector(`${tid('recover-error')}:not([hidden])`);
+    assert.match(await p.textContent(tid('recover-error')), /do not match, or the code has already been used/);
+
+    // new codes from the dashboard replace the old set
+    await q.fill(tid('rc-pass'), 'a-brand-new-password');
+    await q.click(tid('rc-make'));
+    await q.waitForSelector(tid('codes-panel'));
+    assert.equal(await q.locator(tid('recovery-code')).count(), 8);
+    assert.equal(h.errors.filter((e) => !/status of (400|429)/.test(e)).length, 0, h.errors.join('\n'));
+  } finally {
+    await h.close();
+  }
+});
+
 test('site admin: sees organisers, can suspend one, reset a password, and close registration', async () => {
   const h = await launch();
   try {
@@ -191,6 +252,8 @@ test('site admin: sees organisers, can suspend one, reset a password, and close 
     await org.page.fill(tid('reg-user'), 'bob');
     await org.page.fill(tid('reg-pass'), 'a-long-password-1');
     await org.page.click(tid('register-button'));
+    await org.page.check(tid('codes-saved'));
+    await org.page.click(tid('codes-continue'));
     await org.page.waitForSelector(tid('create-button'));
     assert.equal(await org.page.isVisible(tid('nav-site')), false); // organisers do not see the site menu
 

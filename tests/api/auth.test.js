@@ -107,3 +107,115 @@ test('deleting your own account removes your hunts; the site admin cannot be del
   await boss.post('/api/auth/login', { username: name, password });
   assert.equal((await boss.post('/api/auth/delete', { password })).status, 400);
 });
+
+// ---- recovery codes
+const registerWithCodes = async (w, name = 'ann', password = 'first-password-1') => {
+  const c = client(w, `7.${Math.floor(Math.random() * 250)}.${Math.floor(Math.random() * 250)}.9`);
+  const r = await c.post('/api/auth/register', { username: name, password });
+  return { c, codes: r.body.recoveryCodes, password };
+};
+const recover = (w, body, ip = '66.6.6.6') => client(w, ip).post('/api/auth/recover', body);
+
+test('registering gives eight one-time codes, shown once; only hashes are stored', async () => {
+  const w = createWorld();
+  const { c, codes } = await registerWithCodes(w);
+  assert.equal(codes.length, 8);
+  assert.equal(new Set(codes).size, 8);
+  for (const code of codes) assert.match(code, /^[A-HJKMNP-Z2-9]{5}(-[A-HJKMNP-Z2-9]{5}){3}$/);
+  assert.equal((await c.get('/api/auth/me')).body.user.recoveryCodesLeft, 8);
+  assert.equal(JSON.stringify((await c.get('/api/auth/me')).body).includes(codes[0]), false); // never sent again
+  const stored = JSON.stringify(await w.store.getUser('ann'));
+  for (const code of codes) assert.equal(stored.includes(code.replace(/-/g, '')), false); // nothing usable in the database
+  assert.equal(stored.includes('recovery'), true);
+});
+
+test('a recovery code sets a new password, signs in, ends every other session, and is used up', async () => {
+  const w = createWorld();
+  const { c: old, codes } = await registerWithCodes(w, 'ann', 'first-password-1');
+  const r = await recover(w, { username: 'ann', code: codes[0].toLowerCase().replace(/-/g, ' '), next: 'brand-new-password' }); // forgiving typing
+  assert.equal(r.status, 200);
+  assert.equal(r.body.user.recoveryCodesLeft, 7);
+  assert.equal((await old.get('/api/auth/me')).body.user, null); // the old session ended
+  assert.equal((await client(w, '1.1.1.1').post('/api/auth/login', { username: 'ann', password: 'first-password-1' })).body.error, 'invalid-login');
+  assert.equal((await client(w, '1.1.1.2').post('/api/auth/login', { username: 'ann', password: 'brand-new-password' })).status, 200);
+  assert.equal((await recover(w, { username: 'ann', code: codes[0], next: 'another-new-password' })).body.error, 'invalid-recovery'); // used up
+  assert.equal((await recover(w, { username: 'ann', code: codes[1], next: 'another-new-password' })).status, 200); // the others still work
+});
+
+test('a wrong code, an unknown user and a code for another account are all the same refusal', async () => {
+  const w = createWorld();
+  const a = await registerWithCodes(w, 'ann');
+  const b = await registerWithCodes(w, 'bob', 'bobs-password-123');
+  for (const body of [
+    { username: 'ann', code: 'AAAAA-AAAAA-AAAAA-AAAAA', next: 'brand-new-password' },
+    { username: 'nobody', code: a.codes[0], next: 'brand-new-password' },
+    { username: 'bob', code: a.codes[0], next: 'brand-new-password' }, // ann's code does not open bob's account
+    { username: 'ann', code: '', next: 'brand-new-password' },
+  ]) {
+    const r = await recover(w, body);
+    assert.equal(r.status, 400);
+    assert.equal(r.body.error, 'invalid-recovery');
+  }
+  assert.equal((await recover(w, { username: 'ann', code: a.codes[0], next: 'short' })).body.error, 'invalid-password');
+  assert.equal((await client(w, '2.2.2.2').post('/api/auth/login', { username: 'bob', password: b.password })).status, 200); // bob unaffected
+});
+
+test('guessing is rate limited per account and per address, and the account stays recoverable afterwards', async () => {
+  const w = createWorld();
+  const { codes } = await registerWithCodes(w, 'ann');
+  for (let i = 0; i < 5; i++) await recover(w, { username: 'ann', code: 'BBBBB-BBBBB-BBBBB-BBBBB', next: 'brand-new-password' }, `3.3.3.${i}`);
+  assert.equal((await recover(w, { username: 'ann', code: codes[0], next: 'brand-new-password' }, '4.4.4.4')).status, 429); // locked for the hour, from anywhere
+  w.advance(61 * 60 * 1000);
+  assert.equal((await recover(w, { username: 'ann', code: codes[0], next: 'brand-new-password' }, '4.4.4.4')).status, 200);
+  const spray = createWorld();
+  for (let i = 0; i < 15; i++) await recover(spray, { username: `user${i}x`, code: 'CCCCC-CCCCC-CCCCC-CCCCC', next: 'brand-new-password' }, '5.5.5.5');
+  assert.equal((await recover(spray, { username: 'user99', code: 'CCCCC-CCCCC-CCCCC-CCCCC', next: 'brand-new-password' }, '5.5.5.5')).status, 429);
+});
+
+test('a suspended account cannot recover its way in', async () => {
+  const w = createWorld();
+  const { codes } = await registerWithCodes(w, 'ann');
+  await w.store.putUser({ ...(await w.store.getUser('ann')), status: 'suspended' });
+  assert.equal((await recover(w, { username: 'ann', code: codes[0], next: 'brand-new-password' })).body.error, 'account-suspended');
+});
+
+test('new codes replace the old set and need the password', async () => {
+  const w = createWorld();
+  const { c, codes, password } = await registerWithCodes(w, 'ann');
+  assert.equal((await c.post('/api/auth/recovery-codes', { password: 'wrong' })).body.error, 'invalid-login');
+  assert.equal((await client(w).post('/api/auth/recovery-codes', { password })).status, 401);
+  const fresh = (await c.post('/api/auth/recovery-codes', { password })).body.recoveryCodes;
+  assert.equal(fresh.length, 8);
+  assert.equal((await recover(w, { username: 'ann', code: codes[0], next: 'brand-new-password' })).body.error, 'invalid-recovery'); // old set is dead
+  assert.equal((await recover(w, { username: 'ann', code: fresh[0], next: 'brand-new-password' })).status, 200);
+});
+
+test('the owner is told when a code was used or the site admin reset the password, and can dismiss it', async () => {
+  const w = createWorld();
+  const { codes } = await registerWithCodes(w, 'ann');
+  const back = await recover(w, { username: 'ann', code: codes[0], next: 'brand-new-password' });
+  const c = client(w, '9.9.9.9');
+  await c.post('/api/auth/login', { username: 'ann', password: 'brand-new-password' });
+  assert.deepEqual((await c.get('/api/auth/me')).body.user.notices.map((n) => n.type), ['recovery-used']);
+  assert.equal(back.body.user.notices[0].at, w.clock.ms);
+
+  const { name, password } = await seedSiteAdmin(w);
+  const boss = client(w, '8.8.8.8');
+  await boss.post('/api/auth/login', { username: name, password });
+  const reset = (await boss.post('/api/site/users/ann/reset-password')).body.password;
+  const again = client(w, '9.9.9.8');
+  await again.post('/api/auth/login', { username: 'ann', password: reset });
+  assert.deepEqual((await again.get('/api/auth/me')).body.user.notices.map((n) => n.type), ['recovery-used', 'admin-reset']);
+  await again.post('/api/auth/notices/dismiss');
+  assert.deepEqual((await again.get('/api/auth/me')).body.user.notices, []);
+});
+
+test('rate limit counters never contain an address', async () => {
+  const w = createWorld();
+  const seen = [];
+  const original = w.store.bumpRate;
+  w.store.bumpRate = (key, window) => { seen.push(key); return original(key, window); };
+  await client(w, '203.0.113.77').post('/api/auth/register', { username: 'ann', password: 'first-password-1' });
+  assert.ok(seen.length > 0);
+  assert.equal(seen.some((k) => k.includes('203.0.113.77')), false);
+});

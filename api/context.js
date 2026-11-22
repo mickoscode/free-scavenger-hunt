@@ -67,4 +67,7 @@ export async function currentTeam(ctx, req, event) {
 }
 export const requireTeam = async (ctx, req, event) => (await currentTeam(ctx, req, event)) ?? fail(401, 'no-session');
 
+// CloudFront appends the real viewer address to X-Forwarded-For, so the LAST entry is the trustworthy one.
 export const clientIp = (req) => req.headers['x-forwarded-for']?.split(',').pop().trim() || req.ip || 'unknown';
+// What rate limit counters are keyed by: a hash, so no address is stored (counters also expire within two hours).
+export const clientKey = (req) => sha256(`ip:${clientIp(req)}`).slice(0, 20);

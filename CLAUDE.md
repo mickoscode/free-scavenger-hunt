@@ -29,3 +29,4 @@ See `README.md` (layout, workflows) and `docs/setup.md` (wiring).
 - Pages find elements by `data-testid` and the browser tests read those, not wording. No inline script/style/handlers; no innerHTML.
 - Run `npm test` (fast) and `npm run test:browser` (Chromium) before a PR; `node scripts/smoke-test.js <url>` checks a running site.
 - Deploy: merging `api/` or `web/` changes deploys automatically; infrastructure changes need the apply approval.
+- Privacy: never store personal data (no email, names or addresses; rate counters use `clientKey`, a hash). Account recovery is by one-time recovery codes (`routes-auth.js`), not email.

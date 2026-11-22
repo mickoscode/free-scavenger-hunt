@@ -8,7 +8,7 @@ import { randomToken } from './lib/passwords.js';
 import { buildResults, summariseResults } from './lib/results.js';
 import { formatScore } from './lib/scoring.js';
 import { sortScoreboard, teamLabel, validateTeamName } from './lib/teams.js';
-import { clientIp, currentTeam, eventState, loadPublicEvent, requireTeam, teamCookie } from './context.js';
+import { clientKey, currentTeam, eventState, loadPublicEvent, requireTeam, teamCookie } from './context.js';
 import { fail, json } from './http.js';
 
 export const MAX_TEAMS = 300;
@@ -52,7 +52,7 @@ export function publicRoutes(router, ctx) {
     if (!can(status, 'join')) fail(409, 'not-joinable');
     const body = req.body ?? {};
     if (event.joinCode && !matchesJoinCode(body.code, event.joinCode)) fail(400, 'wrong-code');
-    if ((await store.bumpRate(`join#${event.id}#${clientIp(req)}`, 3600)) > 30) fail(429, 'too-many-requests');
+    if ((await store.bumpRate(`join#${event.id}#${clientKey(req)}`, 3600)) > 30) fail(429, 'too-many-requests');
     let name = '';
     let key = null;
     if (event.teamNames !== false) {
