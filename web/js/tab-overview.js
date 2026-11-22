@@ -3,20 +3,20 @@ import { el } from './dom.js';
 import { deleteJson, postJson } from './api.js';
 import { explain } from './admin-shell.js';
 import { countQuestionsOf } from './content-model.js';
-import qrcode from '/js/vendor/qrcode.mjs';
-
-// A QR code as an image (a data: address, which the page's security policy allows).
-function qrImage(text) {
-  const qr = qrcode(0, 'M');
-  qr.addData(text);
-  qr.make();
-  return el('img', { src: qr.createDataURL(6, 2), alt: 'QR code for the hunt address' });
-}
+import { qrPng } from './qr.js';
+import { openShare, shareIcon } from './share-dialog.js';
 
 export async function mountOverview(body, ctx) {
   const d = ctx.data;
   const url = `${location.origin}/e/${d.org}/${d.slug}/`;
-  const qr = el('div', { class: 'qr border rounded p-1 bg-white', 'data-testid': 'qr' }, qrImage(url));
+  const share = () => openShare({ name: d.config.name, url, fileName: `${d.slug}-qr.png` });
+  // The QR code is a button: click it for a big one to download or print. The heading is a link that opens the same dialog.
+  const qrButton = el('button', { type: 'button', class: 'qr-button', title: 'Click to download or print the QR code', 'aria-label': 'QR code: click to download, print or share', 'data-testid': 'qr-open' },
+    el('img', { src: qrPng(url, 440), alt: 'QR code for the hunt address' }));
+  qrButton.addEventListener('click', share);
+  const qr = el('div', { class: 'qr border rounded p-1 bg-white', 'data-testid': 'qr' }, qrButton, el('div', { class: 'qr-hint small text-muted text-center' }, 'Click to download or print'));
+  const shareLink = el('button', { type: 'button', class: 'btn btn-link share-link p-0', 'data-testid': 'share-open' }, shareIcon(), ' Share this hunt');
+  shareLink.addEventListener('click', share);
   const questions = countQuestionsOf(d.content);
 
   const checklist = el('ul', { class: 'list-unstyled mb-0', 'data-testid': 'checklist' },
@@ -24,8 +24,8 @@ export async function mountOverview(body, ctx) {
     item(true, `When: ${d.config.day}, ${d.config.start} to ${d.config.end} (${d.config.timeZone})`, '#settings', 'Change'),
     item(d.teamCount > 0, `${d.teamCount} team${d.teamCount === 1 ? '' : 's'} joined`, '#teams', 'View teams'));
 
-  const share = el('section', { class: 'card card-body mb-3' },
-    el('h2', { class: 'h5' }, 'Share this hunt'),
+  const shareCard = el('section', { class: 'card card-body mb-3' },
+    el('h2', { class: 'h5' }, shareLink),
     el('div', { class: 'd-flex flex-wrap gap-3 align-items-start' }, qr,
       el('div', {}, el('p', { class: 'mb-1' }, 'Players scan the QR code or open:'),
         el('p', { class: 'fw-semibold team-name' }, el('a', { href: url, target: '_blank', rel: 'noopener', 'data-testid': 'event-link' }, url)),
@@ -56,7 +56,7 @@ export async function mountOverview(body, ctx) {
     el('div', { class: 'row g-2' }, el('div', { class: 'col-12 col-md-5' }, confirmEvent), el('div', { class: 'col-12 col-md-auto' }, eventButton)),
     dangerResult);
 
-  body.replaceChildren(share, el('section', { class: 'card card-body mb-3' }, el('h2', { class: 'h5' }, 'Checklist'), checklist), danger);
+  body.replaceChildren(shareCard, el('section', { class: 'card card-body mb-3' }, el('h2', { class: 'h5' }, 'Checklist'), checklist), danger);
 }
 
 function item(done, text, href, linkText) {
