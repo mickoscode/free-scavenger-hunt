@@ -196,3 +196,37 @@ test('the site admin cannot be locked out by a stranger, and cannot be created t
   assert.equal((await client(w, '77.77.77.77').post('/api/auth/login', { username: name, password })).status, 200);
   assert.equal((await client(w, '88.88.88.88').post('/api/auth/register', { username: name, password: 'a-long-password-1' })).body.error, 'invalid-username');
 });
+
+// ---- cost: what an attacker can make the site store or do is bounded
+test('signup is capped overall, so a bot cannot mint accounts faster than 30 an hour', async () => {
+  const w = createWorld();
+  let made = 0;
+  for (let i = 0; i < 40; i++) {
+    const r = await client(w, `10.${Math.floor(i / 4)}.0.${i}`).post('/api/auth/register', { username: `bot${String(i).padStart(2, '0')}x`, password: 'purple-giraffe-lunch-42' });
+    if (r.status === 200) made += 1;
+  }
+  assert.equal(made, 30);
+  w.advance(61 * 60 * 1000);
+  assert.equal((await client(w, '10.99.0.1').post('/api/auth/register', { username: 'later1', password: 'purple-giraffe-lunch-42' })).status, 200);
+});
+
+test('one hunt can only ever take 60 MB of uploaded pictures, and a copy starts clean', async () => {
+  const w = createWorld();
+  const ann = await register(w, 'ann');
+  const ev = await createEvent(ann);
+  const png = Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), Buffer.alloc(400 * 1024)]).toString('base64'); // about 400 KB
+  const up = () => ann.post(`/api/admin/events/${ev.id}/zones/z1/map`, { thumb: png, full: png }); // about 800 KB per upload
+  assert.equal((await up()).status, 200);
+  const used = (await w.store.getEvent(ev.id)).uploadBytes;
+  assert.ok(used > 800 * 1024 && used < 900 * 1024, `counted ${used}`);
+  // close to the limit: the next upload does not fit
+  await w.store.putEvent({ ...(await w.store.getEvent(ev.id)), uploadBytes: 60 * 1024 * 1024 - 500 * 1024 });
+  const before = w.assets.files.size;
+  const refused = await up();
+  assert.equal(refused.status, 409);
+  assert.equal(refused.body.error, 'upload-limit');
+  assert.equal(w.assets.files.size, before); // nothing was stored
+  // a copy of the hunt starts with a clean count
+  const copy = (await ann.post(`/api/admin/events/${ev.id}/duplicate`, { slug: 'fresh-copy', name: 'Fresh' })).body;
+  assert.equal((await w.store.getEvent(copy.id)).uploadBytes, 0);
+});

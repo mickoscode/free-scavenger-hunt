@@ -14,6 +14,7 @@ import { rankTeams } from './routes-public.js';
 
 const SLUG = /^[a-z0-9][a-z0-9-]{1,38}[a-z0-9]$/;
 const MAX_IMAGE_BYTES = 500 * 1024;
+export const MAX_UPLOAD_BYTES_PER_EVENT = 60 * 1024 * 1024; // everything ever uploaded to one hunt (replaced pictures included)
 
 function imageType(bytes) {
   if (bytes.length > 12 && bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47) return { ext: 'png', type: 'image/png' };
@@ -81,7 +82,7 @@ export function adminRoutes(router, ctx) {
     if (typeof slug !== 'string' || !SLUG.test(slug)) fail(400, 'invalid-slug');
     if (typeof name !== 'string' || name.trim() === '' || name.trim().length > 80) fail(400, 'invalid-name');
     if (user.role !== 'site-admin' && (await store.listEventsByOwner(user.name)).length >= user.maxEvents) fail(409, 'event-limit');
-    const copy = { ...event, id: randomId(10), slug, owner: user.name, createdAt: ctx.now(), name: name.trim(), day: new Date(ctx.now()).toISOString().slice(0, 10), resultsPublished: false };
+    const copy = { ...event, id: randomId(10), slug, owner: user.name, createdAt: ctx.now(), name: name.trim(), day: new Date(ctx.now()).toISOString().slice(0, 10), resultsPublished: false, uploadBytes: 0 };
     if (!(await store.createEvent(copy))) fail(409, 'slug-taken');
     const zones = [];
     for (const z of content.zones) {
@@ -159,10 +160,14 @@ export function adminRoutes(router, ctx) {
     const thumb = decodeImage(req.body?.thumb);
     const full = decodeImage(req.body?.full);
     if (!thumb || !full) fail(400, 'invalid-image');
+    const total = (event.uploadBytes ?? 0) + thumb.bytes.length + full.bytes.length;
+    if (total > MAX_UPLOAD_BYTES_PER_EVENT) fail(409, 'upload-limit');
     const tag = randomId(8);
     const base = `assets/${event.id}/${req.params.zone}-${tag}`;
     await assets.put(`${base}-thumb.${thumb.ext}`, thumb.bytes, thumb.type);
     await assets.put(`${base}-full.${full.ext}`, full.bytes, full.type);
+    const fresh = await store.getEvent(event.id);
+    if (fresh) await store.putEvent({ ...fresh, uploadBytes: (fresh.uploadBytes ?? 0) + thumb.bytes.length + full.bytes.length });
     return json(200, { map: { thumb: `/${base}-thumb.${thumb.ext}`, full: `/${base}-full.${full.ext}` } });
   });
 

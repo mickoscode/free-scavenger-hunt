@@ -46,6 +46,7 @@ export const ERRORS = {
   'event-limit': 'You have reached your limit of hunts. Delete one, or ask the site admin to raise your limit.',
   'invalid-time-zone': 'That time zone is not recognised.',
   'game-active': 'The game is running, so this is locked. (Type "override" to change it anyway.)',
+  'upload-limit': 'This hunt has reached its limit for uploaded pictures (60 MB in total). Use Make a copy on the Overview tab to start fresh with only the pictures in use.',
   'players-exist': 'Teams have already joined. Delete the player data first to change the questions.',
   'not-authenticated': 'Your session has ended. Please sign in again.',
   'game-not-over': 'You can publish only after the game has ended.',

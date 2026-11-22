@@ -227,6 +227,11 @@ resource "aws_cloudfront_distribution" "site" {
   viewer_certificate {
     cloudfront_default_certificate = true
   }
+
+  # A CloudFront flat-rate pricing plan (console or CLI) attaches its own web ACL; do not fight it.
+  lifecycle {
+    ignore_changes = [web_acl_id]
+  }
 }
 
 data "aws_iam_policy_document" "site_bucket" {

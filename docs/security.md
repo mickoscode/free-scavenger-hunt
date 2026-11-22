@@ -48,6 +48,25 @@ Cloning, forking or analysing the repository gives an attacker nothing that acts
 - Anyone can create an account (open registration, rate limited). The site admin can close registration, suspend or delete accounts.
 - Denial of service at scale needs a WAF or Shield (a cost decision; the API throttle and Lambda ceiling bound the cost).
 
+## 4. Cost exposure (a "denial of wallet" attack)
+
+Nobody can *take the site over* by flooding it, but a flood costs money, because AWS bills per request. Prices below are approximate for Sydney (ap-southeast-2); check the AWS pricing pages before relying on them. Baseline on 2026-11-22: the whole account cost **$0.78** for the month; a $5 monthly account budget emails at 80% (actual and forecast) and 100%.
+
+| Path of the attack | What limits it | Worst case if sustained non-stop |
+|---|---|---|
+| **API calls** (login, join, answers...) | API Gateway throttle: **25 requests/second** sustained, burst 60 (a throttled request never reaches Lambda or the database). Cached scoreboard reads are served by CloudFront and mostly never reach the API | about **$0.60 an hour, $15 a day, $450 a month** (API Gateway ~$80, Lambda $20-80, DynamoDB up to ~$250 when every call is a failed login, CloudFront requests ~$100). Before this change the throttle was 100/s, four times that |
+| **Database growth** | Signups capped at 30 an hour overall and 4 an hour per address; 3 hunts per account; 300 teams per hunt; 256 KB of questions per hunt; counters expire by themselves (TTL) | under $1 a month per day of sustained attack |
+| **Image storage** | 60 uploads an hour per hunt, 60 MB of uploads in total per hunt, 500 KB per picture, only real images | roughly $3 a month of extra storage per day of sustained attack (needs 30 accounts an hour) |
+| **Static pages and pictures through CloudFront** | **nothing**: CloudFront has no request limit, and billing is per request and per GB (~$0.11/GB). An attacker repeatedly downloading a 500 KB map can run up far more than the API ever could | unbounded by design; a modest 1 Gbps flood is about $50 an hour |
+
+The last row is the real exposure. Options, cheapest first:
+
+1. **CloudFront flat-rate pricing plan, Free tier ($0/month)**: switch the distribution to a plan (CloudFront console, *Plan* / or the CLI). It bundles DDoS protection and WAF, and has **no overage charges**: beyond its allowance (1 million requests and 100 GB a month) AWS reduces performance instead of billing. For a site with no users yet this makes the CDN cost a fixed $0. Caveats: an AWS account on the new "Free plan" credit tier cannot use it; the allowance is small, so a busy real event would need the $15 Pro plan (10 million requests, 50 TB); API Gateway, Lambda and DynamoDB are billed separately (limited by the throttle above). Terraform support for plans is not confirmed; the distribution is already set to ignore the web ACL a plan attaches, so subscribing outside Terraform will not cause a fight.
+2. **AWS WAF rate-based rule** on the distribution (about $7 a month): blocks an address that sends more than N requests in five minutes, before any billing for origin work. Only stops single-source floods.
+3. **Watch the budget**: the existing $5 account budget will email you within hours of an attack. If it does, the fastest stop is the API throttle (set both `api_throttle_*` variables to 0 and apply) or disabling the distribution.
+
+Raising the throttle: busy events are fine at the default (viewers are served from the CloudFront cache; the API sees about one request every 3 seconds per hunt for the scoreboard, plus team submissions). If a large event needs more, raise `api_throttle_rate_limit` in `terraform/variables.tf` before the event and lower it afterwards.
+
 ## Open items for the owner
 
 1. **Personal email in git history.** Commits made before 2026-11-22 carry your real name and a personal email. Turn on *GitHub Settings > Emails > Keep my email addresses private* and *Block command line pushes that expose my email*; this repository's local git identity is already the no-reply address. Rewriting history is possible but cannot remove old pull request refs on GitHub (only GitHub Support can), so recreating the repository is the only complete fix; judge whether that is worth it (the same address is probably already public from other repositories).

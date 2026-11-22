@@ -61,4 +61,4 @@ async function refresh() {
 status.onPhaseChange(paintPhase);
 await refresh();
 await loadPlay();
-setInterval(refresh, 15000);
+setInterval(refresh, 30000);

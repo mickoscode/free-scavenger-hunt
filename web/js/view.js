@@ -46,12 +46,15 @@ function paintBoard() {
   });
 }
 
-async function refresh() {
-  const [i, b, m] = await Promise.all([getJson(base), getJson(`${base}/scoreboard`), getJson(`${base}/me`)]);
+// The game information and the scoreboard are shared by everybody (CloudFront serves them for a few seconds, so any number of
+// viewers cost the API about one request every 3 seconds per hunt). Who this browser is only changes when it joins, so it is
+// asked for once, not on every refresh.
+async function refresh(first = false) {
+  const [i, b, m] = await Promise.all([getJson(base), getJson(`${base}/scoreboard`), first ? getJson(`${base}/me`) : null]);
   if (i.status === 400) { $('[data-testid="load-error"]').hidden = false; return; }
   if (i.ok) { info = i.body; $('[data-testid="event-name"]').textContent = info.name; document.title = info.name; status.update(info); }
   if (b.ok) board = b.body;
-  me = m.ok ? m.body : null;
+  if (m) me = m.ok ? m.body : null;
   paintActions();
 }
 
@@ -64,11 +67,11 @@ joinForm.addEventListener('submit', async (event) => {
   button.disabled = true;
   const res = await postJson(`${base}/join`, { name: $('#team-name').value, code: $('#join-code').value });
   button.disabled = false;
-  if (res.ok) { await refresh(); location.href = eventUrl(slug, 'play/'); return; }
+  if (res.ok) { await refresh(true); location.href = eventUrl(slug, 'play/'); return; }
   joinError.textContent = res.status === 0 ? 'Could not send. Check your connection and try again.' : (JOIN_ERRORS[res.body?.error] ?? 'Something went wrong. Please try again.');
   joinError.dataset.error = res.body?.error ?? 'network';
   joinError.hidden = false;
 });
 
-await refresh();
-setInterval(refresh, 5000);
+await refresh(true);
+setInterval(() => refresh(false), 5000);
