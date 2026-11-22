@@ -55,3 +55,7 @@ The detailed security review (residual risks, cost-abuse economics, open items) 
 ## Phones
 
 - Every page, signed-in organiser pages included, must fit a 360 px wide Android phone with nothing off the right edge and every bar button on screen (`tests/browser/admin-phone.test.js`, `site-pages.test.js`). Measure element edges, not `scrollWidth`: phone emulation silently zooms out to hide the overflow. When you add a page or a bar, add it to those tests.
+
+## Workflow
+
+- One branch and one pull request per change (`main` is protected). When a PR has merged, return to `main`, pull, and **delete its local branch in the same step**; squash merges are not listed by `git branch --merged`, so confirm with `gh pr list --state merged --head <branch>` first. Never delete a branch with an open PR or unmerged work.
