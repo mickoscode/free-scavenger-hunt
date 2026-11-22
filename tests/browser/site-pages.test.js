@@ -53,6 +53,8 @@ test('the front page keeps its original wording, is inviting, and leads to About
       assert.equal(order.above, true, 'the table of contents is above the first section');
       assert.equal(order.firstIsWhy, true);
       assert.deepEqual(order.links, order.headings, 'one entry per section, in order');
+      assert.equal((await page.textContent(tid('toc'))).toLowerCase().includes('on this page'), false, 'no visible heading on the table of contents');
+      assert.equal(await page.getAttribute(tid('toc'), 'aria-label'), 'On this page'); // still announced to screen readers
       assert.ok(order.links.includes('photos'));
       await page.click('[data-testid="toc"] a[href="#photos"]');
       await page.waitForFunction(() => location.hash === '#photos');
