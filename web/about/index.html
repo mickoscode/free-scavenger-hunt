@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="smooth-scroll">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -33,27 +33,40 @@
 
   <article class="container page-narrow prose">
 
-    <section>
+    <nav class="toc" aria-labelledby="toc-title" data-testid="toc">
+      <h2 id="toc-title" class="h6 toc-title">On this page</h2>
+      <ul>
+        <li><a href="#why"><span aria-hidden="true">🌞</span> Why this site exists</a></li>
+        <li><a href="#surf-club"><span aria-hidden="true">🌊</span> The surf club</a></li>
+        <li><a href="#parkrun"><span aria-hidden="true">🏃</span> The parkrun effect</a></li>
+        <li><a href="#free"><span aria-hidden="true">🎁</span> Why it's free</a></li>
+        <li><a href="#privacy"><span aria-hidden="true">🔒</span> Why it doesn't harvest your data</a></li>
+        <li><a href="#photos"><span aria-hidden="true">📸</span> Photo challenges</a></li>
+        <li><a href="#open-source"><span aria-hidden="true">🔍</span> Open for anyone to check</a></li>
+      </ul>
+    </nav>
+
+    <section id="why">
       <h2><span aria-hidden="true">🌞</span> Why this site exists</h2>
       <p>I grew up in the 80s, when a good day meant being outside with your mates, running around and making up games. I never really grew out of it. I love games, and I love running around.</p>
       <p>This site is an attempt to bottle a bit of that feeling: get people off the couch, out in the sun, working together and having a laugh, with a phone in the pocket only to keep score.</p>
     </section>
 
-    <section>
+    <section id="surf-club">
       <h2><span aria-hidden="true">🌊</span> The surf club</h2>
       <p>I'm a proud volunteer and member of Sorrento Surf Life Saving Club. As a senior age manager I created several scavenger hunts for our youth cohort. They were great fun, but they took a lot of work: writing all the questions, then printing and handing out the games. All that printing also limited how many players could take part.</p>
       <p>I wanted software to do the heavy lifting, so that anyone running a club, school, scout group or street party could build a hunt in an afternoon and have as many teams as they like.</p>
       <p class="small text-muted">This is my own project. It isn't run by, or officially connected to, the club.</p>
     </section>
 
-    <section>
+    <section id="parkrun">
       <h2><span aria-hidden="true">🏃</span> The parkrun effect</h2>
       <p>I enjoy running, and the whole idea of parkrun is a huge inspiration: free, friendly community events, made possible by volunteers, open to everybody. Nobody needs a membership or a budget to show up and have a good time.</p>
       <p>I wanted scavenger hunts to work the same way: free for the community, organised by volunteers.</p>
       <p class="small text-muted">This site isn't connected to parkrun. It's just where I found the inspiration.</p>
     </section>
 
-    <section>
+    <section id="free">
       <h2><span aria-hidden="true">🎁</span> Why it's free</h2>
       <p>Volunteers already give their time. The tools shouldn't add a bill. The site is built to be very cheap to run, and I'm happy to cover those small costs myself.</p>
       <ul>
@@ -63,7 +76,7 @@
       </ul>
     </section>
 
-    <section data-testid="privacy">
+    <section id="privacy" data-testid="privacy">
       <h2><span aria-hidden="true">🔒</span> Why it doesn't harvest your data</h2>
       <p>Because I don't want your data. A scavenger hunt only needs to know who is on which team and what they answered, so that is all the site knows.</p>
       <div class="row g-3">
@@ -92,7 +105,30 @@
       <p class="mt-3">Organisers can delete a hunt, or their whole account, whenever they like, and everything goes with it.</p>
     </section>
 
-    <section>
+    <section id="photos" data-testid="photos">
+      <h2><span aria-hidden="true">📸</span> Photo challenges: optional, and never on this site</h2>
+      <p>Photo challenges are completely optional. An organiser can run a great hunt with none at all (the Demo Hunt has none). If an organiser does want them, this is how it works, and why I built it this way.</p>
+      <ul>
+        <li>The organiser creates and runs their own <strong>WhatsApp group</strong> for the event, and teams send their photos there.</li>
+        <li><strong>Photos are never sent to, shared with or stored by this site.</strong> The site cannot even receive one. It only records that a team pressed <em>Photo sent to WhatsApp</em>, and the organiser then scores that challenge here.</li>
+        <li>The group's invite link is only shown to teams who have joined that hunt, never to the public.</li>
+      </ul>
+      <p>I never want to hold anyone's photos, especially children's, so the site is built in a way that it simply can't.</p>
+
+      <div class="about-callout" role="note" data-testid="photo-warning">
+        <h3 class="h5"><span aria-hidden="true">⚠️</span> Please read before joining a photo group</h3>
+        <ul class="mb-0">
+          <li><strong>Only take part if you know and trust the organiser.</strong></li>
+          <li><strong>Never join a WhatsApp group, or share a photo, unless you are 100% sure who runs it and you trust them completely.</strong> If you have any doubt, don't. You can skip the photo challenges and still play the rest of the hunt.</li>
+          <li>Children should only join a photo group with the knowledge and agreement of a parent or guardian.</li>
+          <li><strong>Organisers:</strong> you are responsible for your group. Only invite people who are part of your event, tell players what the photos are for, think about what group members can see about each other, delete the group when the event is over, and follow the child-safety and privacy rules of your own organisation.</li>
+        </ul>
+      </div>
+
+      <p class="mt-3">WhatsApp is a separate service run by someone else, with its own rules and privacy policy. This site doesn't run, monitor, moderate or verify any WhatsApp group, and has no way of seeing what is shared in one. <strong>This site accepts no responsibility</strong> for any group, any photo, or anything that happens between organisers, players or anyone else because of them. Everyone takes part, and runs hunts, at their own risk and judgement.</p>
+    </section>
+
+    <section id="open-source">
       <h2><span aria-hidden="true">🔍</span> Open for anyone to check</h2>
       <p>The code behind this site is open source, so you don't have to take my word for any of the above: <a href="https://github.com/mickoscode/free-scavenger-hunt" rel="noopener" data-testid="source-link">read it on GitHub</a>.</p>
     </section>

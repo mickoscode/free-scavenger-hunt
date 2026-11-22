@@ -10,17 +10,18 @@ const WIDTH = 360;
 const overflowing = (page) => page.evaluate((width) => [...document.querySelectorAll('body *')]
   .filter((e) => !e.closest('.float, .table-responsive, [hidden]') && e.getClientRects().length && e.getBoundingClientRect().right > width + 1)
   .slice(0, 5).map((e) => `${e.tagName.toLowerCase()}${e.className ? `.${String(e.className).split(' ')[0]}` : ''} ${e.textContent.trim().slice(0, 30)} -> ${Math.round(e.getBoundingClientRect().right)}px`), WIDTH);
-// Line 1: "Made in Perth, Western Australia". Line 2: the links, side by side. Everything centred.
+// Line 1: "Made in Perth, Western Australia". Line 2: the links, side by side. Everything centred. Measured in ONE step: the page may
+// still be scrolling smoothly, and two separate measurements would then disagree.
 const footerLayout = async (page, width) => {
-  const made = await page.locator('.footer-made').boundingBox();
-  const links = await page.locator('.footer-links a').evaluateAll((a) => a.map((x) => { const b = x.getBoundingClientRect(); return { top: Math.round(b.top), left: b.left, right: b.right, bottom: b.bottom }; }));
-  assert.ok(links.length >= 1);
-  assert.ok(made.y + made.height <= links[0].top + 1, 'the links are below the text, not beside it');
-  assert.equal(new Set(links.map((l) => l.top)).size, 1, 'the links share one line');
-  const mid = (made.x + made.width / 2);
-  assert.ok(Math.abs(mid - width / 2) < 12, 'the text is centred');
-  const linkMid = (Math.min(...links.map((l) => l.left)) + Math.max(...links.map((l) => l.right))) / 2;
-  assert.ok(Math.abs(linkMid - width / 2) < 12, 'the links are centred');
+  const m = await page.evaluate(() => {
+    const r = (e) => { const b = e.getBoundingClientRect(); return { top: b.top, bottom: b.bottom, left: b.left, right: b.right }; };
+    return { made: r(document.querySelector('.footer-made')), links: [...document.querySelectorAll('.footer-links a')].map(r) };
+  });
+  assert.ok(m.links.length >= 1);
+  assert.ok(m.made.bottom <= m.links[0].top + 1, 'the links are below the text, not beside it');
+  assert.equal(new Set(m.links.map((l) => Math.round(l.top))).size, 1, 'the links share one line');
+  assert.ok(Math.abs((m.made.left + m.made.right) / 2 - width / 2) < 12, 'the text is centred');
+  assert.ok(Math.abs((Math.min(...m.links.map((l) => l.left)) + Math.max(...m.links.map((l) => l.right))) / 2 - width / 2) < 12, 'the links are centred');
 };
 const onScreen = async (page, id) => { const box = await page.locator(tid(id)).boundingBox(); return box !== null && box.x >= 0 && box.x + box.width <= WIDTH; };
 
