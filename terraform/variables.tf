@@ -16,7 +16,7 @@ variable "github_oidc_subject_prefix" {
 }
 
 variable "api_throttle_rate_limit" {
-  description = "Sustained requests per second the API accepts (all hunts together). Cached scoreboard reads do not count. Also the ceiling on what an attack can cost: see docs/security.md (cost exposure) before raising it."
+  description = "Sustained requests per second the API accepts (all hunts together). Cached scoreboard reads do not count. Also the ceiling on what an attack on the API can cost, so raise it deliberately (and only for a large event)."
   type        = number
   default     = 25
 }

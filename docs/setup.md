@@ -39,7 +39,7 @@ If the app needs a new AWS service (for example Cognito or SES), add its permiss
 ## Guard rails
 
 - Roles created by `terraform/` must set `permissions_boundary = local.boundary_policy_arn`; the apply role is not allowed to create a role without it, and cannot edit the CI roles or the boundary.
-- IAM cannot scope CloudFront, API Gateway or ACM by name, so the apply role has those on `*` in this account. Terraform in this repo only ever manages its own resources; nothing references another project's.
+- The apply role can change a CloudFront distribution or an API Gateway API only if it is tagged `Project=free-scavenger-hunt` (explicit denies in `terraform/bootstrap/iam.tf`); Terraform tags everything it creates, so other projects' distributions and APIs are out of its reach. Nothing in this repo references another project's resources.
 - The account's single GitHub OIDC provider belongs to another project's Terraform. This repo only references its ARN; each role's trust policy pins this repository by immutable ID (`repo:<owner>@<id>/<repo>@<id>`).
 
 ## Custom domain

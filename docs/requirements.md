@@ -7,7 +7,7 @@ Everything an organiser needs is **inside the site**: no files to upload from an
 ## Public pages
 
 - **Front page** (`/`): the site name and one-paragraph pitch, *Create your hunt* and *Organiser sign in* buttons, a *Joining a hunt?* box (type `code/hunt-name`), and a three-step *How it works*; dressed up with a gradient hero, a map-and-trail illustration, short feature chips and numbered step cards. A phone that left a game by accident also sees *Return to your game* at the top. The wording of the pitch, the joining box and the three steps is the owner's and is not to be changed without asking.
-- **About** (`/about/`): written in the owner's voice by their brief: why the site exists (playing outside with mates in the 80s), the surf club scavenger hunts that took a lot of writing and printing, the parkrun inspiration, why it is free (no ads, no fees, no premium tier), and exactly what is and is not kept (no email or real name, no analytics, tracking, ads, third-party scripts or visitor logs, nothing sold or shared), a link to the open source code, and "not affiliated" notes for the surf club and parkrun. Every privacy statement on it must stay true: check `docs/security.md` and the code before changing either.
+- **About** (`/about/`): written in the owner's voice by their brief: why the site exists (playing outside with mates in the 80s), the surf club scavenger hunts that took a lot of writing and printing, the parkrun inspiration, why it is free (no ads, no fees, no premium tier), and exactly what is and is not kept (no email or real name, no analytics, tracking, ads, third-party scripts or visitor logs, nothing sold or shared), a link to the open source code, and "not affiliated" notes for the surf club and parkrun. Every privacy statement on it must stay true: check the code and the live configuration before changing either.
 - Both pages share a header (About, Organiser sign in) and a footer ("Made in Perth, Western Australia").
 
 ## People
@@ -64,7 +64,7 @@ Users table (hunt count and limit, suspend / activate, reset password to a one-t
 
 ## Limits and abuse protection
 
-20 zones per hunt, 30 questions per zone, content at most 256 KB, instructions 20 KB, map images 500 KB, 300 teams per hunt, 3 hunts per organiser (site admin can change), 60 MB of uploaded pictures per hunt. Rate limits: 4 registrations per hour per address and 30 per hour overall; 8 wrong passwords per 15 minutes per username; 30 joins per hour per address per hunt. API Gateway throttles at 25 requests per second sustained, burst 60 (cached scoreboard reads do not count); see `docs/security.md` for why this is also the cost ceiling.
+20 zones per hunt, 30 questions per zone, content at most 256 KB, instructions 20 KB, map images 500 KB, 300 teams per hunt, 3 hunts per organiser (site admin can change), 60 MB of uploaded pictures per hunt. Rate limits: 4 registrations per hour per address and 30 per hour overall; 8 wrong passwords per 15 minutes per username; 30 joins per hour per address per hunt. API Gateway throttles at 25 requests per second sustained, burst 60 (cached scoreboard reads do not count). This also caps what a flood could cost.
 
 ## Security model
 
