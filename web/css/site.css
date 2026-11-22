@@ -166,8 +166,8 @@ body.home { background: #fffdf8; }
 .footer-links { display: flex; justify-content: center; gap: 1.5rem; }
 
 /* ---- About page: table of contents, notices, anchors ---- */
-html { scroll-behavior: smooth; }
-@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+html.smooth-scroll { scroll-behavior: smooth; } /* only the About page has in-page links */
+@media (prefers-reduced-motion: reduce) { html.smooth-scroll { scroll-behavior: auto; } }
 .prose section[id] { scroll-margin-top: 1rem; }
 .toc { background: #fff; border: 1px solid #e3e8ef; border-radius: 1rem; padding: 1rem 1.25rem; margin: 1.5rem 0 .5rem; box-shadow: 0 1px 4px rgba(0, 0, 0, .07); }
 .toc-title { text-transform: uppercase; letter-spacing: .06em; color: #6c757d; margin: 0 0 .5rem; font-size: .8rem; font-weight: 700; }
