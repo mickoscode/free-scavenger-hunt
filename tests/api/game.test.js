@@ -274,3 +274,20 @@ test('public responses are cacheable for a moment; anything with a session is no
   assert.equal((await t.c.get(`${base}/results`)).headers['cache-control'], 'no-store');
   assert.equal((await client(w).get('/api/events/missing')).body.error, 'no-event');
 });
+
+test('the game information is the same at /info (what the pages use and CloudFront caches) and at the bare address, and carries nothing personal', async () => {
+  const { w, base } = await setup({ config: { joinCode: 'surf-24a', whatsappUrl: 'https://chat.whatsapp.com/AbCdEf1234567' } });
+  w.set(GAME_START - 1000);
+  const a = await client(w).get(`${base}/info`);
+  const b = await client(w).get(base);
+  assert.deepEqual(a.body, b.body);
+  assert.match(a.headers['cache-control'], /s-maxage=3/);
+  const text = JSON.stringify(a.body);
+  for (const secret of ['SURF24A', 'whatsapp', 'secret', 'owner']) assert.equal(text.toLowerCase().includes(secret.toLowerCase()), false, secret);
+  // only these two paths are ever cached by CloudFront; nothing else in the API may claim to be cacheable
+  const cacheable = [];
+  for (const path of [`${base}/me`, `${base}/play`, `${base}/results`, '/api/auth/me', '/api/admin/events']) {
+    if (/s-maxage/.test((await client(w).get(path)).headers['cache-control'])) cacheable.push(path);
+  }
+  assert.deepEqual(cacheable, []);
+});

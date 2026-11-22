@@ -61,77 +61,19 @@ resource "aws_cloudfront_function" "rewrite" {
   code    = file("${path.module}/rewrite.js")
 }
 
-resource "aws_cloudfront_response_headers_policy" "security" {
-  name    = "${local.name}-security-headers"
-  comment = "Browser security headers for every response"
-
-  # What the pages never need, switched off: a compromised page could not use the camera, microphone or location.
-  custom_headers_config {
-    items {
-      header   = "Permissions-Policy"
-      value    = "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()"
-      override = true
-    }
-
-    items {
-      header   = "Cross-Origin-Opener-Policy"
-      value    = "same-origin"
-      override = true
-    }
-  }
-
-  security_headers_config {
-    strict_transport_security {
-      access_control_max_age_sec = 31536000
-      include_subdomains         = false
-      preload                    = false
-      override                   = true
-    }
-
-    content_type_options {
-      override = true
-    }
-
-    frame_options {
-      frame_option = "DENY"
-      override     = true
-    }
-
-    referrer_policy {
-      referrer_policy = "same-origin"
-      override        = true
-    }
-
-    content_security_policy {
-      content_security_policy = local.content_security_policy
-      override                = true
-    }
-  }
+# Security headers (CSP, HSTS, framing, permissions) on every response, from a function rather than a custom response headers policy:
+# CloudFront's Free and Pro flat-rate plans only allow AWS-managed policies, and this keeps the site eligible for them.
+resource "aws_cloudfront_function" "headers" {
+  name    = "${local.name}-headers"
+  runtime = "cloudfront-js-2.0"
+  comment = "Browser security headers"
+  publish = true
+  code    = replace(file("${path.module}/headers.js"), "__CSP__", local.content_security_policy)
 }
 
-# The API decides what may be cached (Cache-Control: s-maxage on public reads, no-store otherwise). Cookies and
-# headers are forwarded to the API but are NOT part of the cache key, so a cached public response is the same for
-# everybody; anything that depends on a cookie is never marked cacheable by the API.
-resource "aws_cloudfront_cache_policy" "api" {
-  name        = "${local.name}-api"
-  comment     = "Honour the API's Cache-Control, key on path and query only"
-  min_ttl     = 0
-  default_ttl = 0
-  max_ttl     = 10
-
-  parameters_in_cache_key_and_forwarded_to_origin {
-    cookies_config {
-      cookie_behavior = "none"
-    }
-
-    headers_config {
-      header_behavior = "none"
-    }
-
-    query_strings_config {
-      query_string_behavior = "all"
-    }
-  }
+# Everything under /api/ that is not public is never cached; cookies and headers still reach the API (origin request policy).
+data "aws_cloudfront_cache_policy" "disabled" {
+  name = "Managed-CachingDisabled"
 }
 
 resource "aws_cloudfront_distribution" "site" {
@@ -141,7 +83,7 @@ resource "aws_cloudfront_distribution" "site" {
   is_ipv6_enabled     = true
   default_root_object = "index.html"
   http_version        = "http2and3"
-  price_class         = "PriceClass_200"
+  price_class         = "PriceClass_All" # flat-rate plans do not use a price class
 
   origin {
     domain_name              = aws_s3_bucket.site.bucket_regional_domain_name
@@ -173,41 +115,75 @@ resource "aws_cloudfront_distribution" "site" {
   }
 
   default_cache_behavior {
-    target_origin_id           = "site"
-    viewer_protocol_policy     = "redirect-to-https"
-    allowed_methods            = ["GET", "HEAD", "OPTIONS"]
-    cached_methods             = ["GET", "HEAD"]
-    compress                   = true
-    cache_policy_id            = local.cache_policy_caching_optimized
-    response_headers_policy_id = aws_cloudfront_response_headers_policy.security.id
+    target_origin_id       = "site"
+    viewer_protocol_policy = "redirect-to-https"
+    allowed_methods        = ["GET", "HEAD", "OPTIONS"]
+    cached_methods         = ["GET", "HEAD"]
+    compress               = true
+    cache_policy_id        = local.cache_policy_caching_optimized
 
     function_association {
       event_type   = "viewer-request"
       function_arn = aws_cloudfront_function.rewrite.arn
     }
+
+    function_association {
+      event_type   = "viewer-response"
+      function_arn = aws_cloudfront_function.headers.arn
+    }
   }
 
   ordered_cache_behavior {
-    path_pattern               = "/assets/*"
-    target_origin_id           = "assets"
-    viewer_protocol_policy     = "redirect-to-https"
-    allowed_methods            = ["GET", "HEAD", "OPTIONS"]
-    cached_methods             = ["GET", "HEAD"]
-    compress                   = true
-    cache_policy_id            = local.cache_policy_caching_optimized
-    response_headers_policy_id = aws_cloudfront_response_headers_policy.security.id
+    path_pattern           = "/assets/*"
+    target_origin_id       = "assets"
+    viewer_protocol_policy = "redirect-to-https"
+    allowed_methods        = ["GET", "HEAD", "OPTIONS"]
+    cached_methods         = ["GET", "HEAD"]
+    compress               = true
+    cache_policy_id        = local.cache_policy_caching_optimized
+
+    function_association {
+      event_type   = "viewer-response"
+      function_arn = aws_cloudfront_function.headers.arn
+    }
+  }
+
+  # The two public, shared reads (game information and scoreboard) are cached for the few seconds the API allows
+  # (Cache-Control: s-maxage=3), with no cookies in the cache key: any number of viewers cost the API one request per few
+  # seconds per hunt. They are the only API paths that are ever cached, and the API never puts anything personal in them.
+  dynamic "ordered_cache_behavior" {
+    for_each = ["/api/events/*/info", "/api/events/*/scoreboard"]
+
+    content {
+      path_pattern           = ordered_cache_behavior.value
+      target_origin_id       = "api"
+      viewer_protocol_policy = "https-only"
+      allowed_methods        = ["GET", "HEAD", "OPTIONS"]
+      cached_methods         = ["GET", "HEAD"]
+      compress               = true
+      cache_policy_id        = local.cache_policy_caching_optimized
+
+      function_association {
+        event_type   = "viewer-response"
+        function_arn = aws_cloudfront_function.headers.arn
+      }
+    }
   }
 
   ordered_cache_behavior {
-    path_pattern               = "/api/*"
-    target_origin_id           = "api"
-    viewer_protocol_policy     = "https-only"
-    allowed_methods            = ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"]
-    cached_methods             = ["GET", "HEAD"]
-    compress                   = true
-    cache_policy_id            = aws_cloudfront_cache_policy.api.id
-    origin_request_policy_id   = data.aws_cloudfront_origin_request_policy.all_viewer.id
-    response_headers_policy_id = aws_cloudfront_response_headers_policy.security.id
+    path_pattern             = "/api/*"
+    target_origin_id         = "api"
+    viewer_protocol_policy   = "https-only"
+    allowed_methods          = ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"]
+    cached_methods           = ["GET", "HEAD"]
+    compress                 = true
+    cache_policy_id          = data.aws_cloudfront_cache_policy.disabled.id
+    origin_request_policy_id = data.aws_cloudfront_origin_request_policy.all_viewer.id
+
+    function_association {
+      event_type   = "viewer-response"
+      function_arn = aws_cloudfront_function.headers.arn
+    }
   }
 
   # S3 answers 403 for a missing file; show the site's own page. (The API never answers 403 or 404 for this reason.)

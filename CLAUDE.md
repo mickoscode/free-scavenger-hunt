@@ -37,3 +37,4 @@ See `README.md` (layout, workflows) and `docs/setup.md` (wiring).
 - Any new `/api/admin/*` or `/api/site/*` route must pass `tests/api/security.test.js` unchanged (it enumerates routes). Never trust a client address except through `clientKey`. Never put user text into the DOM except with `textContent`.
 - Workflows: no `pull_request_target`; never interpolate event data into a script (use `env:`); new third-party actions must be pinned by SHA and added to `patterns_allowed` in `bootstrap/github.tf`.
 - Git identity for this repo is the GitHub no-reply address: never commit with a personal email.
+- CloudFront must stay eligible for the Free/Pro flat-rate plans (see docs/security.md, cost): only AWS-managed response-header, cache and origin-request policies, at most 5 cache behaviors. Security headers come from `terraform/headers.js`. Only `/api/events/*/info` and `/scoreboard` may ever be cached; never put anything personal in them.

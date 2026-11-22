@@ -27,13 +27,17 @@ export function publicRoutes(router, ctx) {
     return { event, ...(await eventState(ctx, event)) };
   };
 
-  router.get('/api/events/:slug', async (req) => {
+  // The game information. /info is the address the pages use: CloudFront caches exactly that path and /scoreboard (see
+  // terraform/site.tf), so it must stay free of anything personal. The bare address is kept for older callers.
+  const gameInfo = async (req) => {
     const { event, game } = await load(req);
     return json(200, {
       slug: event.slug, name: event.name, ...game,
       teamNames: event.teamNames !== false, joinCodeRequired: Boolean(event.joinCode), resultsPublished: Boolean(event.resultsPublished),
     }, { cache: CACHE_SECONDS });
-  });
+  };
+  router.get('/api/events/:slug/info', gameInfo);
+  router.get('/api/events/:slug', gameInfo);
 
   router.get('/api/events/:slug/scoreboard', async (req) => {
     const { event, game, content } = await load(req);

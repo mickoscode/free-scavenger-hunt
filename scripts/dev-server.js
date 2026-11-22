@@ -14,9 +14,12 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const dist = path.join(root, 'dist');
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg', '.webp': 'image/webp' };
 
-// The same security headers CloudFront adds (the policy text is shared with Terraform).
+// The same security headers CloudFront adds: the very function it runs (terraform/headers.js) with the policy text Terraform uses.
+// (upgrade-insecure-requests is dropped: this server is plain http.)
 const CSP = (await readFile(path.join(root, 'terraform/csp.txt'), 'utf8')).trim().replace('; upgrade-insecure-requests', '');
-const SECURITY = { 'content-security-policy': CSP, 'x-frame-options': 'DENY', 'x-content-type-options': 'nosniff' };
+const headersFn = {};
+vm.runInNewContext((await readFile(path.join(root, 'terraform/headers.js'), 'utf8')).replaceAll('__CSP__', CSP), headersFn);
+const SECURITY = Object.fromEntries(Object.entries(headersFn.handler({ response: { headers: {} } }).headers).map(([k, v]) => [k, v.value]));
 
 // The very function CloudFront runs.
 const sandbox = {};

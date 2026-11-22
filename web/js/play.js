@@ -47,7 +47,7 @@ function paintPhase() {
 }
 
 async function refresh() {
-  const [i, m] = await Promise.all([getJson(base), getJson(`${base}/me`)]);
+  const [i, m] = await Promise.all([getJson(`${base}/info`), getJson(`${base}/me`)]);
   if (m.status === 401 || i.status === 400) { location.replace(eventUrl(slug)); return; }
   if (!i.ok || !m.ok) return;
   info = i.body;
