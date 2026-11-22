@@ -31,13 +31,15 @@ See `README.md` (layout, workflows) and `docs/setup.md` (wiring).
 - Deploy: merging `api/` or `web/` changes deploys automatically; infrastructure changes need the apply approval.
 - Privacy: never store personal data (no email, names or addresses; rate counters use `clientKey`, a hash). Account recovery is by one-time recovery codes (`routes-auth.js`), not email.
 
-## Security rules (see docs/security.md)
+## Security rules
+
+The detailed security review (residual risks, cost-abuse economics, open items) is kept privately by the owner and is deliberately NOT in this public repository: never recreate it here or paste its contents into docs, comments or commit messages. Ask the owner for it when you need it.
 
 - Never add a secret, key or token to the repo or GitHub. Never widen the CI roles or the boundary without saying so; every new AWS service goes through `bootstrap/iam.tf`.
 - Any new `/api/admin/*` or `/api/site/*` route must pass `tests/api/security.test.js` unchanged (it enumerates routes). Never trust a client address except through `clientKey`. Never put user text into the DOM except with `textContent`.
 - Workflows: no `pull_request_target`; never interpolate event data into a script (use `env:`); new third-party actions must be pinned by SHA and added to `patterns_allowed` in `bootstrap/github.tf`.
 - Git identity for this repo is the GitHub no-reply address: never commit with a personal email.
-- CloudFront must stay eligible for the Free/Pro flat-rate plans (see docs/security.md, cost): only AWS-managed response-header, cache and origin-request policies, at most 5 cache behaviors. Security headers come from `terraform/headers.js`. Only `/api/events/*/info` and `/scoreboard` may ever be cached; never put anything personal in them.
+- CloudFront must stay eligible for the Free/Pro flat-rate plans (the Free plan makes CDN cost fixed at $0 with no overage): only AWS-managed response-header, cache and origin-request policies, at most 5 cache behaviors. Security headers come from `terraform/headers.js`. Only `/api/events/*/info` and `/scoreboard` may ever be cached; never put anything personal in them.
 
 ## Addresses and the demo
 
