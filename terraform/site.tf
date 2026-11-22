@@ -38,14 +38,18 @@ resource "aws_cloudfront_origin_access_control" "site" {
   signing_protocol                  = "sigv4"
 }
 
-# AWS-managed policies, referenced by their fixed IDs.
+# AWS-managed policies. The caching one is referenced by its fixed ID; the origin request policy is looked up by name.
 locals {
   cache_policy_caching_optimized = "658327ea-f89d-4fab-a63d-7e88639e58f6"
-  origin_request_all_viewer      = "b689b0a8-53d0-40f0-b9a4-4f09e2f2a9a7" # AllViewerExceptHostHeader: cookies and headers reach the API
 
   # The browser only runs scripts and styles served from this site (no inline code, no CDNs). The same text is used by
   # scripts/dev-server.js, so the pages are tested under the real policy.
   content_security_policy = trimspace(file("${path.module}/csp.txt"))
+}
+
+# Forwards cookies and headers (including the viewer address) to the API; they are not part of the cache key.
+data "aws_cloudfront_origin_request_policy" "all_viewer" {
+  name = "Managed-AllViewerExceptHostHeader"
 }
 
 # Friendly addresses: /e/<hunt>/ is served from the shared event pages (terraform/rewrite.js, tested in tests/unit).
@@ -182,7 +186,7 @@ resource "aws_cloudfront_distribution" "site" {
     cached_methods             = ["GET", "HEAD"]
     compress                   = true
     cache_policy_id            = aws_cloudfront_cache_policy.api.id
-    origin_request_policy_id   = local.origin_request_all_viewer
+    origin_request_policy_id   = data.aws_cloudfront_origin_request_policy.all_viewer.id
     response_headers_policy_id = aws_cloudfront_response_headers_policy.security.id
   }
 
