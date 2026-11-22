@@ -8,7 +8,7 @@ JSON over HTTPS under `/api/`. Errors are `{ "error": "<code>" }`. Statuses: 200
 ## Players (`routes-public.js`), `:slug` is the hunt's address
 | Route | Notes |
 |---|---|
-| `GET /api/events/:slug` | name, status, `startMs`/`endMs`/`serverNowMs`, `teamNames`, `joinCodeRequired`, `resultsPublished`. Cacheable 3 s |
+| `GET /api/events/:slug/info` (also at the bare `/api/events/:slug`) | name, status, `startMs`/`endMs`/`serverNowMs`, `teamNames`, `joinCodeRequired`, `resultsPublished`. Cacheable 3 s |
 | `GET /api/events/:slug/scoreboard` | `{teams:[{rank,name,done,score,number?}], questionTotal, resultsPublished}`. `number` only once published. Cacheable 3 s |
 | `POST /api/events/:slug/join {name,code}` | sets the team cookie. `wrong-code`, `name-taken`, `invalid-name`, `not-joinable`, `event-full` |
 | `GET /api/events/:slug/me` | team session: number, name, `done:{answers,photos}`, `whatsappUrl` |

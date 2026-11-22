@@ -42,7 +42,7 @@ await check('hunt and admin addresses are rewritten to their pages', async () =>
   assert.equal((await call('GET', '/definitely-not-a-page.html')).status, 404);
 });
 await check('the API answers through CloudFront (Lambda and DynamoDB are wired up)', () => retry(async () => {
-  const r = await call('GET', '/api/events/smoke-no-such-hunt');
+  const r = await call('GET', '/api/events/smoke-no-such-hunt/info');
   assert.equal(r.status, 400, r.text);
   assert.equal(r.json.error, 'no-event');
   assert.equal((await call('GET', '/api/auth/me')).json.user, null);
