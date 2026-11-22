@@ -70,11 +70,18 @@ test('My hunts has a Test button next to Manage that goes to the page players se
     assert.equal((await page.textContent(`${card} ${tid('event-manage')}`)).trim(), 'Manage ›');
     await h.shot(page, '81-my-hunts-test-button');
 
-    // Test: straight to the view page, whatever state the game is in (this one is running)
-    await page.click(`${card} ${tid('event-test')}`);
-    await page.waitForURL(new RegExp(`/e/${created.org}/try-me/$`));
-    await page.waitForSelector(tid('event-name'));
-    assert.match(await page.textContent(tid('status')), /Time left/);
+    // Test: opens the view page in a NEW tab (whatever state the game is in; this one is running) and leaves My hunts open
+    assert.equal(await page.getAttribute(`${card} ${tid('event-test')}`, 'target'), '_blank');
+    assert.match(await page.getAttribute(`${card} ${tid('event-test')}`, 'rel'), /noopener/);
+    const [tab] = await Promise.all([page.context().waitForEvent('page'), page.click(`${card} ${tid('event-test')}`)]);
+    await tab.waitForLoadState();
+    assert.match(tab.url(), new RegExp(`/e/${created.org}/try-me/$`));
+    await tab.waitForSelector(tid('event-name'));
+    assert.match(await tab.textContent(tid('status')), /Time left/);
+    assert.equal(await tab.evaluate(() => window.opener), null); // noopener: the new tab cannot reach back into the dashboard
+    await tab.close();
+    assert.equal(page.url(), h.url('/admin/')); // My hunts is still right where it was
+    assert.equal(await page.isVisible(card), true);
 
     // Manage and the card itself both open the manager
     await page.goto(h.url('/admin/'));
