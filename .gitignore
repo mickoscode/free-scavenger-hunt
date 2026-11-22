@@ -49,3 +49,4 @@ build/
 node_modules/
 *tfplan*
 .terraform.lock.hcl.bak
+terraform/.placeholder-*.zip

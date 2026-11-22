@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Scavenger hunt</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/css/site.css">
+</head>
+<body>
+<main class="container page" data-testid="view-page">
+  <p class="mb-1"><a href="/" class="small">Free Scavenger Hunt</a></p>
+  <h1 class="h3 team-name" data-testid="event-name">&nbsp;</h1>
+  <p class="status-line" data-testid="status" aria-live="polite"></p>
+  <p class="text-danger" data-testid="load-error" hidden>Could not load this hunt. Check the address and your connection.</p>
+
+  <div data-testid="actions" class="mb-3">
+    <form id="join-form" class="card card-body" hidden novalidate>
+      <div class="mb-2" id="code-field" hidden>
+        <label for="join-code" class="form-label">Join Code:</label>
+        <input id="join-code" class="form-control form-control-lg" autocomplete="off" autocapitalize="characters" maxlength="30" data-testid="join-code">
+      </div>
+      <div class="mb-2" id="name-field">
+        <label for="team-name" class="form-label">Name for Your Team:</label>
+        <input id="team-name" class="form-control form-control-lg" autocomplete="off" maxlength="60" data-testid="team-name">
+      </div>
+      <button type="submit" class="btn btn-primary btn-lg" data-testid="join-button">Join</button>
+      <p class="text-danger mt-2 mb-0" role="alert" data-testid="join-error" hidden></p>
+    </form>
+    <a id="play-link" class="btn btn-primary btn-lg" href="play/" data-testid="play-link" hidden>Play</a>
+    <a id="results-link" class="btn btn-success btn-lg" href="results/" data-testid="results-link" hidden>Results</a>
+  </div>
+
+  <h2 class="h6 text-uppercase-none" data-testid="board-heading" hidden></h2>
+  <div id="scoreboard" data-testid="scoreboard-container"></div>
+  <p class="text-muted small" data-testid="no-teams" hidden>No teams yet.</p>
+</main>
+<script type="module" src="/js/view.js"></script>
+</body>
+</html>

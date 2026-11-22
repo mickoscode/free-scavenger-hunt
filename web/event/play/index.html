@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Play</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/css/site.css">
+</head>
+<body>
+<main class="container page" data-testid="play-page">
+  <div class="team-line" data-testid="team-line"><span class="team-number" data-testid="team-number"></span> <span class="team-label" data-testid="team-label"></span></div>
+  <p class="mb-1"><a href="../" data-testid="back-to-board">‹ view scoreboard</a> <a href="../results/" class="ms-3" data-testid="results-link" hidden>results</a></p>
+  <p class="status-line" data-testid="status" aria-live="polite"></p>
+  <p data-testid="message" class="alert alert-info" hidden></p>
+  <details class="card card-body mb-3" data-testid="instructions" hidden>
+    <summary class="fw-semibold">Instructions (tap to show/hide)</summary>
+    <div id="instructions-body" class="mt-2"></div>
+  </details>
+  <div id="zones" data-testid="zones"></div>
+</main>
+<script type="module" src="/js/play.js"></script>
+</body>
+</html>

@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Manage hunt - Free Scavenger Hunt</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/css/site.css">
+</head>
+<body>
+<nav class="admin-nav" id="nav" hidden></nav>
+<main class="container page page-wide" id="app">
+  <p class="text-danger" id="load-error" hidden>That hunt was not found.</p>
+  <div id="event" hidden>
+    <div class="d-flex flex-wrap justify-content-between align-items-baseline gap-2 mb-2">
+      <h1 class="h3 mb-0 team-name" data-testid="event-title"></h1>
+      <span class="badge text-bg-secondary fs-6" data-testid="event-status"></span>
+    </div>
+    <ul class="nav nav-tabs admin-tabs mb-3" id="tabs" role="tablist"></ul>
+    <div id="tab-body"></div>
+  </div>
+</main>
+<script type="module" src="/js/admin-event.js"></script>
+</body>
+</html>

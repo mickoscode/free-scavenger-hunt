@@ -14,3 +14,15 @@ output "cloudfront_distribution_id" {
 output "deploy_role_arn" {
   value = aws_iam_role.deploy.arn
 }
+
+output "assets_bucket" {
+  value = aws_s3_bucket.assets.id
+}
+
+output "api_function" {
+  value = aws_lambda_function.api.function_name
+}
+
+output "table" {
+  value = aws_dynamodb_table.main.name
+}

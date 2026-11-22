@@ -1,13 +1,17 @@
 name: Deploy site
 
-# Publishes web/ to the site bucket on every merge to main that touches it, and after each Terraform apply.
+# Publishes the API and the site on every merge to main that touches either, and after each Terraform apply.
 # Runs from main only: the deploy role (terraform/deploy.tf) trusts nothing else.
 on:
   push:
     branches: [main]
     paths:
       - "web/**"
+      - "api/**"
       - "scripts/build.sh"
+      - "scripts/package-backend.sh"
+      - "scripts/smoke-test.js"
+      - "terraform/csp.txt"
       - "package.json"
       - "package-lock.json"
       - ".github/workflows/deploy.yml"
@@ -37,9 +41,16 @@ jobs:
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: "24"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
 
       - name: Build and test
         run: npm test
+
+      - name: Package the API
+        run: bash scripts/package-backend.sh
 
       - name: Configure AWS credentials (deploy role)
         uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
@@ -47,19 +58,30 @@ jobs:
           role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/fsh-deploy
           aws-region: ${{ vars.AWS_REGION }}
 
-      # The distribution is found by its comment, so no ID is stored anywhere. Before the first Terraform apply
-      # there is nothing to deploy to: say so and stop (the apply starts this workflow again when it finishes).
+      # The distribution is found by its comment, so no ID is stored anywhere. Before the first Terraform apply there is
+      # nothing to deploy to: say so and stop (the apply starts this workflow again when it finishes).
       - name: Find the site
         id: site
         run: |
-          id=$(aws cloudfront list-distributions --query "DistributionList.Items[?Comment=='free-scavenger-hunt'].Id | [0]" --output text)
-          if [ -z "$id" ] || [ "$id" = "None" ]; then
+          row=$(aws cloudfront list-distributions --query "DistributionList.Items[?Comment=='free-scavenger-hunt'].[Id,DomainName] | [0]" --output text)
+          if [ -z "$row" ] || [ "$row" = "None" ]; then
             echo "::warning::The site infrastructure does not exist yet. Approve the Terraform apply; it starts this deploy afterwards."
             echo "ready=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
+          read -r id domain <<< "$row"
           echo "ready=true" >> "$GITHUB_OUTPUT"
           echo "id=$id" >> "$GITHUB_OUTPUT"
+          echo "url=https://$domain" >> "$GITHUB_OUTPUT"
+
+      # The API goes first so the site never calls a route that does not exist yet.
+      - name: Deploy the API
+        if: steps.site.outputs.ready == 'true'
+        run: |
+          aws lambda update-function-code --function-name fsh-api --zip-file fileb://build/backend.zip --query 'LastModified' --output text
+          aws lambda wait function-updated --function-name fsh-api
+          # Zip contents are ES modules in a file the placeholder also called lambda.js: make sure the handler is the real one.
+          aws lambda get-function-configuration --function-name fsh-api --query '[Runtime,Handler]' --output text
 
       - name: Sync dist to S3
         if: steps.site.outputs.ready == 'true'
@@ -68,3 +90,13 @@ jobs:
       - name: Invalidate CloudFront cache
         if: steps.site.outputs.ready == 'true'
         run: aws cloudfront create-invalidation --distribution-id "${{ steps.site.outputs.id }}" --paths "/*"
+
+      # A whole hunt on the live site with a throwaway account that deletes itself. A failure does not roll anything
+      # back: fix forward, or revert the PR and run this workflow again.
+      - name: Smoke test
+        if: steps.site.outputs.ready == 'true'
+        run: node scripts/smoke-test.js "${{ steps.site.outputs.url }}"
+
+      - name: Summary
+        if: steps.site.outputs.ready == 'true'
+        run: echo "Deployed: ${{ steps.site.outputs.url }}" >> "$GITHUB_STEP_SUMMARY"
