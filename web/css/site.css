@@ -184,3 +184,7 @@ html.smooth-scroll { scroll-behavior: smooth; } /* only the About page has in-pa
 .back-to-top:hover { background: #e7f1ff; }
 /* A transform would make the button the reference frame for its stretched click area (the whole card), shrinking it while pressed */
 .btn.stretched-link:active { transform: none; }
+
+/* The Duplicate form's fields sit above the card's stretched link, and the link is switched off while the form is open (no accidental trips) */
+.event-dup { position: relative; z-index: 2; }
+.event-card.is-duplicating .stretched-link::after { display: none; }

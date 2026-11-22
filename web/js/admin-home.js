@@ -3,6 +3,7 @@ import { $, el } from './dom.js';
 import { getJson, postJson } from './api.js';
 import { explain, loadSession, renderNav } from './admin-shell.js';
 import { fillTimeZones } from './timezones.js';
+import { duplicateDefaults, slugify } from './hunt-names.js';
 
 const show = (id, on) => { $(id).hidden = !on; };
 const fail = (sel, res) => { const n = $(sel); n.textContent = explain(res); n.hidden = false; };
@@ -58,14 +59,64 @@ async function showDashboard(user) {
   const events = res.body?.events ?? [];
   $('#no-events').hidden = events.length > 0;
   const list = $('#events-list');
-  // The whole card opens the hunt's manager (the Manage link stretches over it); Test is a separate link on top, straight to the page players see, in a new tab so this page stays open.
-  list.replaceChildren(...events.map((e) => el('div', { class: 'card card-body mb-2 event-card', 'data-testid': 'event-card', 'data-slug': e.slug },
-    el('div', { class: 'd-flex justify-content-between align-items-center gap-2' }, el('strong', { class: 'team-name' }, e.name), el('span', { class: 'badge text-bg-secondary' }, e.status)),
-    el('div', { class: 'small text-muted' }, `/e/${e.org}/${e.slug}/ · ${e.day} · ${e.teamCount} team${e.teamCount === 1 ? '' : 's'}`),
-    el('div', { class: 'd-flex flex-wrap gap-2 mt-2' },
+  const canCreate = res.body?.canCreate !== false;
+  const slugs = events.map((e) => e.slug);
+
+  // A quick form on a card: the copy's name and address, already filled in ("v2-..."), and nothing else to decide.
+  function duplicateForm(e, card) {
+    const defaults = duplicateDefaults(e.name, e.slug, slugs);
+    const name = el('input', { class: 'form-control', maxlength: '80', value: defaults.name, 'data-testid': 'dup-name', 'aria-label': 'Name of the copy' });
+    const slug = el('input', { class: 'form-control', maxlength: '40', autocapitalize: 'off', value: defaults.slug, 'data-testid': 'dup-slug', 'aria-label': 'Web address of the copy' });
+    const error = el('p', { class: 'text-danger small mt-2 mb-0', role: 'alert', hidden: true, 'data-testid': 'dup-error' });
+    const create = el('button', { type: 'submit', class: 'btn btn-primary btn-sm', 'data-testid': 'dup-create' }, 'Create copy');
+    const cancel = el('button', { type: 'button', class: 'btn btn-outline-secondary btn-sm', 'data-testid': 'dup-cancel' }, 'Cancel');
+    let touched = false; // until the address is edited by hand it follows the name
+    slug.addEventListener('input', () => { touched = true; });
+    name.addEventListener('input', () => { if (!touched) slug.value = slugify(name.value); });
+    const form = el('form', { class: 'event-dup mt-3', novalidate: true, hidden: true, 'data-testid': 'dup-form' },
+      el('p', { class: 'small text-muted mb-2' }, 'A copy of this hunt: its settings, questions, instructions and maps (not its teams or scores). Give it a name and an address.'),
+      el('label', { class: 'form-label small mb-1' }, 'Name of the copy'), name,
+      el('label', { class: 'form-label small mb-1 mt-2' }, 'Web address'),
+      el('div', { class: 'input-group' }, el('span', { class: 'input-group-text' }, `/e/${e.org}/`), slug),
+      el('div', { class: 'd-flex gap-2 mt-3' }, create, cancel), error);
+    cancel.addEventListener('click', () => { form.hidden = true; card.classList.remove('is-duplicating'); });
+    form.addEventListener('submit', async (ev) => {
+      ev.preventDefault();
+      error.hidden = true;
+      create.disabled = true;
+      const out = await postJson(`/api/admin/events/${e.id}/duplicate`, { name: name.value, slug: slug.value.trim().toLowerCase() });
+      if (out.ok) { location.href = `/admin/event/?id=${out.body.id}`; return; }
+      create.disabled = false;
+      error.textContent = explain(out);
+      error.hidden = false;
+    });
+    return { form, open() { form.hidden = false; card.classList.add('is-duplicating'); name.focus(); name.select(); } };
+  }
+
+  // The whole card opens the hunt's manager (the Manage link stretches over it); Test and Duplicate are separate buttons on top. Test opens the
+  // page players see in a new tab so this page stays open.
+  list.replaceChildren(...events.map((e) => {
+    const card = el('div', { class: 'card card-body mb-2 event-card', 'data-testid': 'event-card', 'data-slug': e.slug });
+    const buttons = el('div', { class: 'd-flex flex-wrap gap-2 mt-2' },
       el('a', { class: 'btn btn-sm btn-outline-primary stretched-link', href: `/admin/event/?id=${e.id}`, 'data-testid': 'event-manage' }, 'Manage ›'),
-      el('a', { class: 'btn btn-sm btn-outline-success event-test', href: `/e/${e.org}/${e.slug}/`, target: '_blank', rel: 'noopener', title: 'Open the page players see (in a new tab)', 'data-testid': 'event-test' }, 'Test ›')))));
-  $('#create-form').hidden = res.body?.canCreate === false;
+      el('a', { class: 'btn btn-sm btn-outline-success event-test', href: `/e/${e.org}/${e.slug}/`, target: '_blank', rel: 'noopener', title: 'Open the page players see (in a new tab)', 'data-testid': 'event-test' }, 'Test ›'));
+    card.append(
+      el('div', { class: 'd-flex justify-content-between align-items-center gap-2' }, el('strong', { class: 'team-name' }, e.name), el('span', { class: 'badge text-bg-secondary' }, e.status)),
+      el('div', { class: 'small text-muted' }, `/e/${e.org}/${e.slug}/ · ${e.day} · ${e.teamCount} team${e.teamCount === 1 ? '' : 's'}`),
+      buttons);
+    if (canCreate) {
+      const dup = duplicateForm(e, card);
+      const open = el('button', { type: 'button', class: 'btn btn-sm btn-outline-secondary event-test', title: 'Make a copy of this hunt', 'data-testid': 'event-duplicate' }, 'Duplicate ›');
+      open.addEventListener('click', () => dup.open());
+      buttons.append(open);
+      card.append(dup.form);
+    }
+    return card;
+  }));
+  const note = $('#limit-note');
+  note.hidden = canCreate;
+  note.textContent = canCreate ? '' : `You have reached your limit of ${res.body?.maxEvents ?? 'your'} hunts. Delete one to make room, or ask the site admin to raise your limit.`;
+  $('#create-form').hidden = !canCreate;
 }
 
 const { user, registrationOpen } = await loadSession();
