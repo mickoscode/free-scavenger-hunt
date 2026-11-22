@@ -1,6 +1,7 @@
 // What every organiser page shares: the top bar, and finding out who is signed in.
 import { $, el } from './dom.js';
 import { getJson, postJson } from './api.js';
+import './top-link.js';
 
 export async function loadSession() {
   const res = await getJson('/api/auth/me');

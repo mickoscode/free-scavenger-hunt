@@ -62,8 +62,8 @@ a { text-underline-offset: .18em; }
 .player-nav .btn { flex: 1 1 8rem; }
 
 /* tappable cards */
-.zone-tile, a.card { border-radius: .75rem; box-shadow: 0 1px 3px rgba(0, 0, 0, .14); transition: box-shadow .15s, transform .15s; overflow: hidden; }
-.zone-tile:hover, a.card:hover { box-shadow: 0 4px 14px rgba(13, 110, 253, .25); transform: translateY(-1px); }
+.zone-tile, a.card, .event-card { border-radius: .75rem; box-shadow: 0 1px 3px rgba(0, 0, 0, .14); transition: box-shadow .15s, transform .15s; overflow: hidden; }
+.zone-tile:hover, a.card:hover, .event-card:hover { box-shadow: 0 4px 14px rgba(13, 110, 253, .25); transform: translateY(-1px); }
 .tile-chevron { font-size: 1.9rem; line-height: 1; color: var(--fsh-blue); font-weight: 700; }
 .min-w-0 { min-width: 0; }
 .q-number { font-size: .75rem; letter-spacing: .04em; text-transform: uppercase; color: #6c757d; font-weight: 600; margin-bottom: .15rem; }
@@ -177,3 +177,10 @@ html.smooth-scroll { scroll-behavior: smooth; } /* only the About page has in-pa
 @media (min-width: 576px) { .toc ul { grid-template-columns: 1fr 1fr; } }
 .about-callout { background: #fff8e1; border: 2px solid #ffc107; border-left-width: 8px; border-radius: 1rem; padding: 1rem 1.25rem; margin: 1.25rem 0; }
 .about-callout h3 { margin-bottom: .5rem; font-weight: 800; }
+
+/* Test sits above the card's stretched Manage link, so it is its own target */
+.event-test { position: relative; z-index: 2; }
+.back-to-top { display: inline-block; padding: .3rem .9rem; border: 1px solid #cfe2ff; border-radius: 999px; background: #fff; font-weight: 600; text-decoration: none; }
+.back-to-top:hover { background: #e7f1ff; }
+/* A transform would make the button the reference frame for its stretched click area (the whole card), shrinking it while pressed */
+.btn.stretched-link:active { transform: none; }

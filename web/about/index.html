@@ -12,13 +12,13 @@
   <link rel="stylesheet" href="/css/bootstrap.min.css">
   <link rel="stylesheet" href="/css/site.css">
 </head>
-<body class="home about">
+<body id="top" class="home about">
 <header class="site-header">
   <div class="container site-header-inner">
     <a class="site-brand" href="/"><span aria-hidden="true">🧭</span> Free Scavenger Hunt</a>
     <nav class="site-nav" aria-label="Site">
       <a href="/about/" aria-current="page">About</a>
-      <a class="btn btn-sm btn-outline-primary" href="/admin/"><span class="d-none d-sm-inline">Organiser </span>Sign in</a>
+      <a class="btn btn-sm btn-outline-primary" href="/admin/" data-signin="header" data-testid="header-signin"><span class="d-none d-sm-inline">Organiser </span>Sign in</a>
     </nav>
   </div>
 </header>
@@ -144,9 +144,11 @@
 
 <footer class="site-footer" data-testid="site-footer">
   <div class="container">
+    <a class="back-to-top" href="#top" data-testid="back-to-top">↑ Back to top</a>
     <span class="footer-made">Made in Perth, Western Australia</span>
     <nav class="footer-links" aria-label="Footer"><a href="/" data-testid="footer-home">Home</a><a href="/about/" data-testid="footer-about">About</a></nav>
   </div>
 </footer>
+<script type="module" src="/js/public-session.js"></script>
 </body>
 </html>

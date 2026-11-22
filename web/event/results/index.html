@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="/css/bootstrap.min.css">
   <link rel="stylesheet" href="/css/site.css">
 </head>
-<body>
+<body id="top">
 <main class="container page" data-testid="results-page">
   <nav class="player-nav" aria-label="Game">
     <a class="btn btn-outline-primary" href="../" data-testid="back-to-board">‹ Scoreboard</a>
@@ -17,6 +17,7 @@
   <p data-testid="not-ready" class="alert alert-info" hidden>The final results are not ready yet. They will be published soon!</p>
   <p data-testid="not-found" class="alert alert-warning" hidden>That team was not found.</p>
   <div id="results" data-testid="results"></div>
+  <a class="btn btn-outline-primary w-100 mt-3" href="#top" data-testid="results-top">↑ Back to top</a>
 </main>
 <script type="module" src="/js/results-page.js"></script>
 </body>
