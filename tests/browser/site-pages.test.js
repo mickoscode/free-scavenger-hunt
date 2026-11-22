@@ -25,6 +25,7 @@ test('the front page keeps its original wording, is inviting, and leads to About
         'Teams join by QR code, pick a team name, and answer in each zone while the clock runs.',
         'Everyone watches a live scoreboard. The organiser scores photos, then publishes the final results with a full breakdown for each team.',
       ]) assert.ok(body.replace(/\s+/g, ' ').includes(phrase), phrase);
+      assert.equal((await page.textContent('.site-footer')).replace(/\s+/g, ' ').includes('Made in Perth, Western Australia'), true); // the footer, exactly as the owner worded it
       assert.equal(await page.locator('.hero-art').isVisible(), true);
       assert.equal(await page.locator('.chip').count(), 5);
       assert.equal(await page.locator('ol.steps li').count(), 3);
