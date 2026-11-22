@@ -43,6 +43,24 @@ test('the front page keeps its original wording, is inviting, and leads to About
       for (const phrase of ['Sorrento Surf Life Saving Club', 'parkrun', 'Why it\'s free', 'harvest your data', 'No advertising, no tracking, no analytics']) assert.ok(about.includes(phrase), phrase);
       assert.ok(about.includes('isn\'t connected to parkrun') && about.includes('isn\'t run by, or officially connected to, the club'));
       assert.equal(await page.locator(tid('privacy')).isVisible(), true);
+      // the table of contents sits above the first section, and every entry leads to a real section, in the same order
+      const order = await page.evaluate(() => {
+        const toc = document.querySelector('[data-testid="toc"]');
+        const first = document.querySelector('article section');
+        const links = [...toc.querySelectorAll('a')].map((a) => a.getAttribute('href').slice(1));
+        const headings = [...document.querySelectorAll('article section[id]')].map((x) => x.id);
+        return { above: Boolean(toc.compareDocumentPosition(first) & Node.DOCUMENT_POSITION_FOLLOWING), links, headings, firstIsWhy: first.id === 'why' };
+      });
+      assert.equal(order.above, true, 'the table of contents is above the first section');
+      assert.equal(order.firstIsWhy, true);
+      assert.deepEqual(order.links, order.headings, 'one entry per section, in order');
+      assert.ok(order.links.includes('photos'));
+      await page.click('[data-testid="toc"] a[href="#photos"]');
+      await page.waitForFunction(() => location.hash === '#photos');
+      assert.equal(await page.locator(tid('photos')).isVisible(), true);
+      const photos = (await page.textContent(tid('photos'))).replace(/\s+/g, ' ');
+      for (const phrase of ['completely optional', 'WhatsApp group', 'never sent to, shared with or stored by this site', 'Only take part if you know and trust the organiser', '100% sure', 'parent or guardian', 'This site accepts no responsibility', 'at their own risk']) assert.ok(photos.includes(phrase), phrase);
+      assert.equal(await page.locator(tid('photo-warning')).isVisible(), true);
       assert.equal(await page.getAttribute(tid('source-link'), 'rel'), 'noopener');
       assert.equal(await noSideScroll(page), true, `${label}: about sideways scrolling`);
       await h.shot(page, `51-about-${label}`);
