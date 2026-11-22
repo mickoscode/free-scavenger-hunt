@@ -56,21 +56,7 @@ export async function mountOverview(body, ctx) {
     el('div', { class: 'row g-2' }, el('div', { class: 'col-12 col-md-5' }, confirmEvent), el('div', { class: 'col-12 col-md-auto' }, eventButton)),
     dangerResult);
 
-  const copyName = el('input', { class: 'form-control', placeholder: 'e.g. Winter Fun Hunt', maxlength: '80', 'data-testid': 'copy-name' });
-  const copySlug = el('input', { class: 'form-control', placeholder: 'e.g. winter-fun-hunt', maxlength: '40', autocapitalize: 'off', 'data-testid': 'copy-slug' });
-  const copyButton = el('button', { type: 'button', class: 'btn btn-outline-primary', 'data-testid': 'copy-hunt' }, 'Make a copy');
-  copyName.addEventListener('input', () => { if (!copySlug.dataset.touched) copySlug.value = copyName.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40); });
-  copySlug.addEventListener('input', () => { copySlug.dataset.touched = '1'; });
-  copyButton.addEventListener('click', async () => {
-    const res = await postJson(`${ctx.base}/duplicate`, { name: copyName.value, slug: copySlug.value.trim().toLowerCase() });
-    if (res.ok) location.href = `/admin/event/?id=${res.body.id}`; else say(explain(res), false);
-  });
-  const copyBox = el('section', { class: 'card card-body mb-3' },
-    el('h2', { class: 'h5' }, 'Use this hunt as a template'),
-    el('p', { class: 'small text-muted' }, 'Makes a new hunt with the same settings, zones, questions, instructions and maps. Teams and scores are not copied.'),
-    el('div', { class: 'row g-2' }, el('div', { class: 'col-12 col-md-5' }, copyName), el('div', { class: 'col-12 col-md-5' }, copySlug), el('div', { class: 'col-12 col-md-auto' }, copyButton)));
-
-  body.replaceChildren(share, el('section', { class: 'card card-body mb-3' }, el('h2', { class: 'h5' }, 'Checklist'), checklist), copyBox, danger);
+  body.replaceChildren(share, el('section', { class: 'card card-body mb-3' }, el('h2', { class: 'h5' }, 'Checklist'), checklist), danger);
 }
 
 function item(done, text, href, linkText) {
