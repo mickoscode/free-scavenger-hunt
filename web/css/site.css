@@ -1,0 +1,49 @@
+/* Mobile first. Bootstrap does the grid and components; this file adds only what the game needs. */
+:root { --fsh-blue: #0d6efd; --fsh-grey: #495057; --fsh-purple: #7a1fd1; }
+body { background: #f8f9fa; }
+.page { max-width: 760px; padding-top: 1rem; padding-bottom: 4rem; }
+.page-wide { max-width: 1100px; }
+
+.team-name { overflow-wrap: anywhere; }
+.status-line { font-size: 1.1rem; font-weight: 600; margin-bottom: .75rem; }
+.status-line[data-phase="pre"] { color: #b45309; }
+.status-line[data-phase="active"] { color: #15803d; }
+.status-line[data-phase="post"], .status-line[data-phase="unconfigured"] { color: var(--fsh-grey); }
+
+.scoreboard th { font-weight: 600; font-variant: small-caps; }
+.scoreboard td:first-child, .scoreboard th:first-child { width: 3.5rem; }
+
+/* Play page header: the number large and blue, the name smaller and grey, on one baseline. */
+.team-line { display: flex; flex-wrap: wrap; align-items: baseline; gap: .1rem .6rem; margin-bottom: .25rem; }
+.team-number { font-size: 2.25rem; font-weight: 800; color: var(--fsh-blue); line-height: 1.1; }
+.team-label { font-size: 1.1rem; color: var(--fsh-grey); overflow-wrap: anywhere; min-width: 0; }
+
+.zone-tile { cursor: pointer; }
+.zone-tile img { aspect-ratio: 4 / 3; object-fit: cover; }
+.map-button img { width: 100%; height: auto; }
+.map-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, .92); z-index: 1050; overflow: auto; padding: 3.5rem .5rem 1rem; }
+.map-overlay img { display: block; max-width: none; width: 200%; max-height: none; }
+.map-overlay .close { position: fixed; top: .75rem; right: .75rem; z-index: 1051; }
+@media (min-width: 768px) { .map-overlay img { width: 100%; } }
+
+/* Results cards */
+.result-line { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .25rem 1rem; margin-top: .25rem; }
+.status-good { color: #15803d; font-weight: 600; }
+.status-bad { color: #b91c1c; font-weight: 600; }
+.status-warn { color: #b45309; font-weight: 600; }
+.status-half { color: #c2410c; font-weight: 600; }
+.result-points { color: var(--fsh-purple); font-weight: 700; }
+
+/* Admin */
+.admin-nav { background: #fff; border-bottom: 1px solid #dee2e6; }
+.admin-tabs .nav-link { cursor: pointer; }
+.help-toggle { padding: 0 .4rem; line-height: 1.2; border-radius: 50%; }
+.editor-zone { border-left: 4px solid var(--fsh-blue); }
+.editor-question { background: #f8f9fa; }
+.qr { max-width: 180px; }
+.qr svg, .qr img { width: 100%; height: auto; }
+.markdown h3, .markdown h4, .markdown h5 { margin-top: .75rem; }
+.hero { padding: 3rem 0 2rem; }
+.steps li { margin-bottom: .5rem; }
+.score-box { width: 5.5rem; }
+.limit-input { width: 5rem; }

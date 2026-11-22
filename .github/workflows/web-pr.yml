@@ -1,6 +1,6 @@
 name: Web checks
 
-# Pull requests (and pushes to main) touching the site or its tooling. "Validate site" is a required check.
+# Pull requests touching the site, the API or their tests. Job names are required status checks (see terraform/bootstrap).
 on:
   pull_request:
     branches: [main]
@@ -27,6 +27,68 @@ jobs:
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: "24"
+          cache: npm
 
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      # Builds dist/, checks the pages against the Content-Security-Policy, runs the unit tests and the API tests
+      # (in-memory store, controllable clock).
       - name: Build and test
         run: npm test
+
+  api-dynamo:
+    name: API tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      dynamodb:
+        image: amazon/dynamodb-local:latest
+        ports:
+          - 8000:8000
+    steps:
+      - name: Checkout repository code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      # The same store contract the in-memory store passes, against the real DynamoDB API.
+      - name: Store contract against DynamoDB Local
+        env:
+          DYNAMODB_ENDPOINT: http://localhost:8000
+        run: node --test --test-timeout=120000 tests/api/store-dynamo.test.js
+
+  browser:
+    name: Browser tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      # The real pages in Chromium under the real Content-Security-Policy: an organiser builds and runs a hunt, teams play it.
+      - name: Browser tests
+        run: npm run test:browser

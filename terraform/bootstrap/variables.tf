@@ -29,6 +29,8 @@ variable "required_checks" {
   type        = list(string)
   default = [
     "Validate site",
+    "API tests",
+    "Browser tests",
     "Terraform validate",
     "Terraform security scan",
     "Terraform plan",

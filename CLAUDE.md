@@ -18,3 +18,14 @@ A site that lets anyone create and run a free scavenger hunt. Players play ident
 - The sandbox's `terraform`/`aws` are snaps that need `dangerouslyDisableSandbox` to run.
 
 See `README.md` (layout, workflows) and `docs/setup.md` (wiring).
+
+## Application rules
+
+- Spec: `docs/requirements.md`; API: `docs/api.md`. Keep them in step with the code.
+- Everything an organiser needs lives in the site (editor, map upload, settings): never add a dependency on files from a repo, a CLI or another service.
+- Game rules are pure functions in `api/lib/` (no AWS); routes in `api/routes-*.js`; stores implement one interface (`store/memory.js` is the reference, `tests/api/store.contract.js` the contract both pass).
+- Tenancy: every admin route goes through `loadManagedEvent` (owner or site admin; anyone else gets `no-event`); every public route is scoped by slug; team cookies are per event. Add a case to `tests/api/tenancy.test.js` for each new admin route.
+- API errors avoid 403/404 (CloudFront rewrites them). Answers never reach a browser before results are published (tests scan responses for them).
+- Pages find elements by `data-testid` and the browser tests read those, not wording. No inline script/style/handlers; no innerHTML.
+- Run `npm test` (fast) and `npm run test:browser` (Chromium) before a PR; `node scripts/smoke-test.js <url>` checks a running site.
+- Deploy: merging `api/` or `web/` changes deploys automatically; infrastructure changes need the apply approval.

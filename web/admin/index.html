@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Organiser - Free Scavenger Hunt</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/css/site.css">
+</head>
+<body>
+<nav class="admin-nav" id="nav" hidden></nav>
+<main class="container page" id="app">
+
+  <section id="auth" hidden>
+    <h1 class="h3 mb-3">Organiser sign in</h1>
+    <div class="row g-3">
+      <div class="col-12 col-md-6">
+        <form id="login-form" class="card card-body" novalidate>
+          <h2 class="h5">Sign in</h2>
+          <label class="form-label" for="login-user">Username</label>
+          <input id="login-user" class="form-control mb-2" autocomplete="username" autocapitalize="off" data-testid="login-user">
+          <label class="form-label" for="login-pass">Password</label>
+          <input id="login-pass" type="password" class="form-control mb-3" autocomplete="current-password" data-testid="login-pass">
+          <button class="btn btn-primary" type="submit" data-testid="login-button">Sign in</button>
+          <p class="text-danger mt-2 mb-0" role="alert" data-testid="login-error" hidden></p>
+        </form>
+      </div>
+      <div class="col-12 col-md-6" id="register-col">
+        <form id="register-form" class="card card-body" novalidate>
+          <h2 class="h5">Create an organiser account</h2>
+          <p class="small text-muted">Free. Choose a username and a password of at least 10 characters. There is no email and no password recovery by email: keep your password safe.</p>
+          <label class="form-label" for="reg-user">Username (3 to 30 letters, numbers, - or _)</label>
+          <input id="reg-user" class="form-control mb-2" autocomplete="username" autocapitalize="off" data-testid="reg-user">
+          <label class="form-label" for="reg-pass">Password</label>
+          <input id="reg-pass" type="password" class="form-control mb-3" autocomplete="new-password" data-testid="reg-pass">
+          <button class="btn btn-success" type="submit" data-testid="register-button">Create account</button>
+          <p class="text-danger mt-2 mb-0" role="alert" data-testid="register-error" hidden></p>
+        </form>
+        <p class="card card-body" id="registration-closed" hidden>New accounts are closed at the moment.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="dashboard" hidden>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h1 class="h3 mb-0">Your hunts</h1>
+    </div>
+    <div id="events-list" data-testid="events-list"></div>
+    <p class="text-muted" id="no-events" hidden>You have no hunts yet. Create your first one below.</p>
+
+    <form id="create-form" class="card card-body mt-4" novalidate>
+      <h2 class="h5">Create a hunt</h2>
+      <div class="row g-2">
+        <div class="col-12 col-md-6"><label class="form-label" for="new-name">Name</label>
+          <input id="new-name" class="form-control" maxlength="80" placeholder="Sorrento Youth Scavenger Hunt" data-testid="new-name"></div>
+        <div class="col-12 col-md-6"><label class="form-label" for="new-slug">Address <span class="text-muted small">(what players type or scan)</span></label>
+          <div class="input-group"><span class="input-group-text">/e/</span><input id="new-slug" class="form-control" maxlength="40" autocapitalize="off" placeholder="sorrento-youth" data-testid="new-slug"></div></div>
+        <div class="col-12"><label class="form-label" for="new-tz">Time zone</label><select id="new-tz" class="form-select" data-testid="new-tz"></select></div>
+      </div>
+      <button class="btn btn-primary mt-3 align-self-start" type="submit" data-testid="create-button">Create hunt</button>
+      <p class="text-danger mt-2 mb-0" role="alert" data-testid="create-error" hidden></p>
+    </form>
+
+    <form id="password-form" class="card card-body mt-4" novalidate>
+      <h2 class="h5">Change password</h2>
+      <div class="row g-2">
+        <div class="col-12 col-md-6"><input type="password" class="form-control" id="pw-current" placeholder="Current password" autocomplete="current-password"></div>
+        <div class="col-12 col-md-6"><input type="password" class="form-control" id="pw-next" placeholder="New password (10+ characters)" autocomplete="new-password"></div>
+      </div>
+      <button class="btn btn-outline-primary mt-2 align-self-start" type="submit">Change password</button>
+      <p class="mt-2 mb-0" role="status" id="pw-message" hidden></p>
+    </form>
+
+    <form id="delete-form" class="card card-body mt-4 border-danger" novalidate>
+      <h2 class="h5 text-danger">Delete my account</h2>
+      <p class="small">Removes your account and all of your hunts, with their teams and scores. This cannot be undone.</p>
+      <input type="password" class="form-control mb-2" id="del-pass" placeholder="Your password" autocomplete="current-password" data-testid="delete-account-password">
+      <button class="btn btn-outline-danger align-self-start" type="submit" data-testid="delete-account">Delete my account</button>
+      <p class="text-danger mt-2 mb-0" role="alert" id="del-error" hidden></p>
+    </form>
+  </section>
+</main>
+<script type="module" src="/js/admin-home.js"></script>
+</body>
+</html>

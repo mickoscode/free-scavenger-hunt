@@ -9,6 +9,16 @@
 
 Not used: HCP Terraform, GitHub secrets, long-lived AWS keys.
 
+## First-time site admin
+
+After the first successful deploy, from a computer with AWS credentials for the account and this repo checked out (`npm ci` first):
+
+```sh
+FSH_TABLE=fsh-main node scripts/create-site-admin.js        # prints a random password for the user "siteadmin"
+```
+
+Sign in at `/admin/` and change the password. Run it again to reset the site admin's password if it is ever lost.
+
 ## Day to day
 
 Open a PR. Checks run; a Terraform change gets a plan comment. Merge. If `terraform/` changed, approve the apply in the Actions run (**Review deployments**); the deploy then runs by itself. If only `web/` changed, the deploy runs straight away.

@@ -35,6 +35,12 @@ data "aws_iam_policy_document" "deploy" {
   }
 
   statement {
+    sid       = "DeployApi"
+    actions   = ["lambda:UpdateFunctionCode", "lambda:GetFunction", "lambda:GetFunctionConfiguration"]
+    resources = [aws_lambda_function.api.arn]
+  }
+
+  statement {
     sid       = "FindDistribution"
     actions   = ["cloudfront:ListDistributions"]
     resources = ["*"]

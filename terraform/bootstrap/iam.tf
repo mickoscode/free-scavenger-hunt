@@ -153,7 +153,7 @@ data "aws_iam_policy_document" "plan" {
   statement {
     sid = "ReadUnscopableServices"
     actions = [
-      "cloudfront:Get*", "cloudfront:List*",
+      "cloudfront:Get*", "cloudfront:List*", "cloudfront:Describe*",
       "apigateway:GET",
       "acm:Describe*", "acm:List*", "acm:Get*",
       "logs:DescribeLogGroups",
