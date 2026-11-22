@@ -34,8 +34,9 @@ test('the front page keeps its original wording, is inviting, and leads to About
       await page.click(tid('about-link'));
       await page.waitForURL(/\/about\/$/);
       assert.match(await page.textContent(tid('about-title')), /About Free Scavenger Hunt/);
+      assert.doesNotMatch(await page.textContent('.about-hero'), /volunteer in Perth|Western Australia/); // the owner asked for the top section to stay free of this
       const about = (await page.textContent('body')).replace(/\s+/g, ' ');
-      for (const phrase of ['Perth, Western Australia', 'Sorrento Surf Life Saving Club', 'parkrun', 'Why it\'s free', 'harvest your data', 'No advertising, no tracking, no analytics']) assert.ok(about.includes(phrase), phrase);
+      for (const phrase of ['Sorrento Surf Life Saving Club', 'parkrun', 'Why it\'s free', 'harvest your data', 'No advertising, no tracking, no analytics']) assert.ok(about.includes(phrase), phrase);
       assert.ok(about.includes('isn\'t connected to parkrun') && about.includes('isn\'t run by, or officially connected to, the club'));
       assert.equal(await page.locator(tid('privacy')).isVisible(), true);
       assert.equal(await page.getAttribute(tid('source-link'), 'rel'), 'noopener');
