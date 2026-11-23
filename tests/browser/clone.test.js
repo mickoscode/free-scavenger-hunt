@@ -138,6 +138,16 @@ test('the Clone form fits a 360 px phone', async () => {
     await page.goto(h.url('/admin/'));
     await page.waitForSelector(card('a-rather-long-hunt-name-for-a-phone'));
     assert.deepEqual(await overflowing(page, 360), [], 'the card with three buttons');
+    // the four buttons are one tidy row: same top, same height, and the label at the same height inside each (a <button> and a link-styled
+    // button used to centre their text differently, so Clone sat lower than Manage, Play and Data)
+    const metrics = await page.$$eval(`${tid('event-card')} .event-actions > .btn`, (els) => els.map((e) => {
+      const r = e.getBoundingClientRect(); const range = document.createRange(); range.selectNodeContents(e);
+      return { top: Math.round(r.top * 10) / 10, height: Math.round(r.height * 10) / 10, textOffset: Math.round((range.getBoundingClientRect().top - r.top) * 10) / 10 };
+    }));
+    assert.equal(metrics.length, 4);
+    assert.equal(new Set(metrics.map((m) => m.top)).size, 1, 'one row');
+    assert.equal(new Set(metrics.map((m) => m.height)).size, 1, 'one height');
+    assert.equal(new Set(metrics.map((m) => m.textOffset)).size, 1, 'labels at the same height');
     await page.click(`${tid('event-clone')}`);
     await page.waitForSelector(tid('clone-form'));
     assert.deepEqual(await overflowing(page, 360), [], 'the open form');

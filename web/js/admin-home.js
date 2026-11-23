@@ -100,7 +100,7 @@ async function showDashboard(user) {
   // page players see in a new tab so this page stays open.
   list.replaceChildren(...events.map((e) => {
     const card = el('div', { class: 'card card-body mb-2 event-card', 'data-testid': 'event-card', 'data-slug': e.slug });
-    const buttons = el('div', { class: 'd-flex flex-wrap gap-2 mt-2' },
+    const buttons = el('div', { class: 'event-actions d-flex flex-wrap gap-2 mt-2' },
       el('a', { class: 'btn btn-sm btn-outline-primary stretched-link', href: `/admin/event/?id=${e.id}`, 'data-testid': 'event-manage' }, 'Manage ›'),
       el('a', { class: 'btn btn-sm btn-outline-success event-action', href: `/e/${e.org}/${e.slug}/`, target: '_blank', rel: 'noopener', title: 'Open the page players see (in a new tab)', 'data-testid': 'event-play' }, 'Play ›'));
     card.append(
