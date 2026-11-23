@@ -53,7 +53,7 @@ export async function mountSettings(body, ctx) {
 
   const save = el('button', { type: 'submit', class: 'btn btn-primary', 'data-testid': 'save-settings' }, 'Save settings');
   const message = el('p', { class: 'mt-2 mb-0', role: 'status', hidden: true });
-  const test = el('a', { class: 'btn btn-outline-secondary btn-sm', target: '_blank', rel: 'noopener noreferrer', href: '#', hidden: true }, 'Play link');
+  const test = el('a', { class: 'btn btn-outline-secondary btn-sm', target: '_blank', rel: 'noopener noreferrer', href: '#', hidden: true }, 'Test link');
   const syncTest = () => { const ok = /^https:\/\/chat\.whatsapp\.com\//.test(wa.value.trim()); test.hidden = !ok; if (ok) test.href = wa.value.trim(); };
   wa.addEventListener('input', syncTest);
   syncTest();

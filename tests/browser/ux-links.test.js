@@ -166,3 +166,23 @@ test('each public page has one call-to-action button to the organiser page, not 
     await h.close();
   }
 });
+
+// The WhatsApp "Test link" on the Settings tab opens the group's invite link. It is NOT the "Play" button on My hunts, whatever the hunt page is called.
+test('Settings tab: the WhatsApp link button is called Test link and opens the invite link', async () => {
+  const h = await launch();
+  try {
+    const { page, api } = await organiser(h, 'wanda');
+    const created = await hunt(api, h, 'wa-hunt', [{ id: 'q1', type: 'string', text: 'Q?', answers: ['a'], score: 1 }]);
+    await page.goto(h.url(`/admin/event/?id=${created.id}#settings`));
+    await page.waitForSelector(tid('set-whatsapp'));
+    await page.fill(tid('set-whatsapp'), 'https://chat.whatsapp.com/abcdefghij');
+    const link = page.locator('a:has-text("Test link")');
+    assert.equal(await link.count(), 1);
+    assert.equal(await link.isVisible(), true);
+    assert.equal(await link.getAttribute('href'), 'https://chat.whatsapp.com/abcdefghij');
+    assert.equal(await page.locator('a:has-text("Play link")').count(), 0);
+    assert.deepEqual(h.errors, []);
+  } finally {
+    await h.close();
+  }
+});
