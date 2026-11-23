@@ -31,9 +31,12 @@ test('the public pages know the organiser is signed in: Sign out in the header, 
       assert.equal(await page.locator(tid('header-signin')).count(), 0, `${path}: no sign in button while signed in`);
       assert.equal(await page.textContent(tid('header-signout')), 'Sign out');
       if (path === '/') {
-        assert.equal((await page.textContent(tid('signin-link'))).trim(), 'Hunt admin page');
-        assert.equal(await page.getAttribute(tid('signin-link'), 'href'), '/admin/');
+        assert.equal((await page.textContent(tid('create-link'))).trim(), 'Hunt admin page');
+        assert.equal(await page.getAttribute(tid('create-link'), 'href'), '/admin/');
+        assert.equal(await page.locator(tid('signin-link')).count(), 0); // one button, not two to the same place
         await h.shot(page, '80-front-signed-in');
+      } else {
+        assert.equal((await page.textContent(tid('about-create'))).trim(), 'Hunt admin page');
       }
     }
     // signing out from there really signs out, and the pages go back to inviting people in
@@ -42,7 +45,8 @@ test('the public pages know the organiser is signed in: Sign out in the header, 
     assert.equal(await page.locator(tid('header-signout')).count(), 0);
     await page.goto(h.url('/'));
     await page.waitForSelector(tid('header-signin'));
-    assert.match(await page.textContent(tid('signin-link')), /Organiser sign in/);
+    assert.match(await page.textContent(tid('create-link')), /Create your hunt/);
+    assert.match(await page.textContent(tid('header-signin')), /Sign in/);
     assert.equal(await page.locator(tid('header-signout')).count(), 0);
     assert.equal((await page.evaluate(() => fetch('/api/admin/events').then((r) => r.status))), 401); // and the session really is gone
 
@@ -50,7 +54,7 @@ test('the public pages know the organiser is signed in: Sign out in the header, 
     const visitor = (await h.desktop('visitor')).page;
     await visitor.goto(h.url('/'));
     assert.equal(await visitor.isVisible(tid('header-signin')), true);
-    assert.match(await visitor.textContent(tid('signin-link')), /Organiser sign in/);
+    assert.match(await visitor.textContent(tid('create-link')), /Create your hunt/);
     assert.deepEqual(h.errors, []);
   } finally {
     await h.close();
@@ -136,6 +140,27 @@ test('Back to top works on long pages, and does not disturb pages that keep thei
     await t.waitForFunction(() => window.scrollY < 4);
     assert.equal(await t.evaluate(() => location.hash), '#z1'); // still in the zone
     assert.equal(await t.locator(tid('zone-panel')).first().isVisible(), true);
+    assert.deepEqual(h.errors, []);
+  } finally {
+    await h.close();
+  }
+});
+
+// No page offers two big buttons for the same place side by side. (The header, the footer and a link in the text may repeat a destination;
+// that is navigation. What is checked here is the call-to-action area of each page.)
+test('each public page has one call-to-action button to the organiser page, not two', async () => {
+  const h = await launch();
+  try {
+    const visitor = (await h.desktop('v')).page;
+    const big = (p) => p.evaluate(() => [...document.querySelectorAll('main a.btn[href="/admin/"], main a.btn[href="/"], main a.btn[href="/about/"]')].filter((e) => e.getClientRects().length).map((e) => e.getAttribute('href')));
+    await visitor.goto(h.url('/'));
+    assert.deepEqual((await big(visitor)).filter((x) => x === '/admin/'), ['/admin/']);
+    await visitor.goto(h.url('/about/'));
+    assert.deepEqual(await big(visitor), ['/admin/', '/about/'].filter((x) => x === '/admin/'));
+    await visitor.goto(h.url('/admin/'));
+    await visitor.waitForSelector(tid('login-button'));
+    assert.deepEqual(await big(visitor), []); // no extra Home / About buttons: the header and footer have them
+    assert.equal(await visitor.locator(tid('playing-home')).count(), 1); // the one in the text for people who are only here to play stays
     assert.deepEqual(h.errors, []);
   } finally {
     await h.close();

@@ -1,5 +1,5 @@
 // The public pages (front page, About) are plain files, so they ask whether this browser is signed in as an organiser and, if so, show
-// Sign out in the header and a "Hunt admin page" button instead of "Organiser sign in".
+// Sign out in the header, and the one big button (Create your hunt) says "Hunt admin page" instead: both go to the same page.
 import { $$, el } from './dom.js';
 import { getJson, postJson } from './api.js';
 import './top-link.js';
