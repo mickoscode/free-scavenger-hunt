@@ -10,3 +10,7 @@
 8. **After the game**: finish scoring, tick "I have applied all scores" and **Publish final results**. Teams then see their full results. You can return to provisional to correct a score.
 
 Tips: questions are locked once a team has joined; delete player data to change them. Settings are locked while the game is running. **Duplicate ›** (under My hunts) to start next year's event from this one.
+
+## Export and import (the Data tab)
+
+Advanced, and optional. **Data ›** on My hunts opens a hunt's Data tab. *Download hunt file* saves one text file (`.json`) with the settings, instructions, zones, questions and answers, plus a picture file for each zone map: keep them together in one folder. Edit the text file in any text editor (or paste it into an AI chat and ask for more questions in the same format), then open the Data tab of a hunt and choose the file and its pictures together under *Import a hunt file*. Importing replaces that hunt's questions, so use a new hunt or one without teams. The file contains the answers, so keep it private; it does not contain teams, scores, the join code or the WhatsApp link.

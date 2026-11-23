@@ -1,4 +1,4 @@
-// The event manager: one page, tabs for overview, settings, questions, teams and scoring.
+// The event manager: one page, tabs for overview, settings, questions, teams, scoring and data.
 import { $, el } from './dom.js';
 import { getJson } from './api.js';
 import { requireSignedIn } from './admin-shell.js';
@@ -7,11 +7,12 @@ import { mountSettings } from './tab-settings.js';
 import { mountContent } from './tab-content.js';
 import { mountTeams } from './tab-teams.js';
 import { mountScoring } from './tab-scoring.js';
+import { mountData } from './tab-data.js';
 
 const STATUS_LABEL = { unconfigured: 'Setting up', pre: 'Waiting to start', active: 'In progress', post: 'Finished' };
 const TABS = [
   ['overview', 'Overview', mountOverview], ['settings', 'Settings', mountSettings], ['questions', 'Questions', mountContent],
-  ['teams', 'Teams', mountTeams], ['scoring', 'Scoring', mountScoring],
+  ['teams', 'Teams', mountTeams], ['scoring', 'Scoring', mountScoring], ['data', 'Data', mountData],
 ];
 
 const user = await requireSignedIn();
