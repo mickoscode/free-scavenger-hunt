@@ -18,7 +18,7 @@ test('the front page keeps its original wording, is inviting, and leads to About
       for (const phrase of [
         'Free Scavenger Hunt',
         'Run a scavenger hunt for your school, club or community. Teams join on their phones, answer questions around your venue and race the clock. No apps, no cost.',
-        'Create your hunt', 'Organiser sign in', 'Joining a hunt?',
+        'Create your hunt', 'Joining a hunt?',
         "Scan the QR code your organiser gave you, or type the hunt's address below",
         'How it works',
         'Organisers create an event: zones with maps, questions (text, numbers or photo challenges), a start and finish time.',
@@ -66,8 +66,8 @@ test('the front page keeps its original wording, is inviting, and leads to About
       assert.equal(await noSideScroll(page), true, `${label}: about sideways scrolling`);
       await h.shot(page, `51-about-${label}`);
 
-      // back to the start and on to sign in
-      await page.click('text=Back to the start');
+      // the footer takes you home, and the one big button on to sign in / create
+      await page.click(tid('footer-home'));
       await page.waitForURL((u) => u.pathname === '/');
       await page.click(tid('create-link'));
       await page.waitForURL(/\/admin\/$/);
@@ -93,8 +93,6 @@ test('the organiser page leads home and to About when signed out, keeps its foot
       assert.equal(await page.locator(tid('public-header')).isVisible(), true);
       assert.equal(await page.getAttribute(tid('brand-home'), 'href'), '/');
       assert.equal(await page.getAttribute(tid('nav-about'), 'href'), '/about/');
-      assert.equal(await page.getAttribute(tid('back-home'), 'href'), '/');
-      assert.equal(await page.getAttribute(tid('about-from-signin'), 'href'), '/about/');
       assert.equal(await page.getAttribute(tid('playing-home'), 'href'), '/');
       assert.equal(await page.getAttribute(tid('footer-home'), 'href'), '/');
       assert.equal(await page.getAttribute(tid('footer-about'), 'href'), '/about/');
@@ -102,10 +100,10 @@ test('the organiser page leads home and to About when signed out, keeps its foot
       assert.equal(await noSideScroll(page), true, `${label}: sign in page sideways scrolling`);
       await h.shot(page, `52-organiser-signin-${label}`);
       // the links really go there
-      await page.click(tid('back-home'));
+      await page.click(tid('footer-home'));
       await page.waitForURL((u) => u.pathname === '/');
       await page.goto(h.url('/admin/'));
-      await page.click(tid('about-from-signin'));
+      await page.click(tid('nav-about'));
       await page.waitForURL(/\/about\/$/);
     }
     // signed in: the public header gives way to the organiser bar, and the footer stays (Home and About)
