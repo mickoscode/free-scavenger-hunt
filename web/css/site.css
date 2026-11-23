@@ -236,3 +236,18 @@ html.smooth-scroll { scroll-behavior: smooth; } /* only the About page has in-pa
 .prose h3 { font-size: 1.25rem; font-weight: 800; margin-top: 1.8rem; }
 .prose h4[id], .prose h3[id], .prose section[id] { scroll-margin-top: 1rem; }
 .prose code { overflow-wrap: anywhere; }
+
+/* ---- Score adjustments (organiser Scoring tab) and the adjustment card (player results) ---- */
+.adjust-row { background: #fff; border: 1px solid #dee2e6; border-radius: .75rem; padding: .6rem .75rem; margin-bottom: .5rem; display: grid; gap: .4rem .75rem; grid-template-columns: minmax(0, 1fr); }
+.adjust-row[data-adjusted="true"] { border-color: #0d6efd; box-shadow: 0 0 0 1px #0d6efd inset; }
+.adj-fields { display: grid; grid-template-columns: 6rem minmax(0, 1fr); gap: .5rem; }
+.adj-result { display: flex; flex-wrap: wrap; align-items: baseline; gap: .1rem .75rem; }
+@media (min-width: 768px) {
+  .adjust-row { grid-template-columns: minmax(8rem, 1fr) minmax(0, 2fr) 9rem; align-items: center; }
+  .adj-result { flex-direction: column; gap: 0; }
+}
+.adjustment-card { border-left-width: 6px; }
+.adjustment-up { border-left-color: #198754; }
+.adjustment-down { border-left-color: #dc3545; }
+.adjustment-up .result-status { color: #146c43; }
+.adjustment-down .result-status { color: #b02a37; }

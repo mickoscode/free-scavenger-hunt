@@ -21,6 +21,7 @@ test('event admins only see and change their own events', async () => {
     ['get', base(b.id)], ['put', `${base(b.id)}/config`, {}], ['put', `${base(b.id)}/content`, sampleContent()], ['get', `${base(b.id)}/teams`],
     ['get', `${base(b.id)}/photos`], ['post', `${base(b.id)}/publish`, { confirm: true }], ['post', `${base(b.id)}/player-data/delete`, { confirm: 'delete' }],
     ['del', base(b.id), { confirm: 'bobs-hunt' }], ['post', `${base(b.id)}/zones/z1/map`, {}],
+    ['put', `${base(b.id)}/teams/1/adjustment`, { points: 5, reason: 'x' }],
   ]) {
     const r = await ann[method](path, body);
     assert.equal(r.status, 400, `${method} ${path}`);

@@ -52,5 +52,9 @@ export const ERRORS = {
   'players-exist': 'Teams have already joined. Delete the player data first to change the questions.',
   'not-authenticated': 'Your session has ended. Please sign in again.',
   'game-not-over': 'You can publish only after the game has ended.',
+  'results-published': 'The results are published, so this is read-only. Return to provisional to change it.',
+  'scoring-closed': 'Scoring opens when the game starts.',
+  'invalid-adjustment': 'Points must be a number between -1000 and 1000 (up to 2 decimals), and a reason (up to 80 characters) is needed.',
+  'no-team': 'That team no longer exists.',
 };
 export const explain = (res) => (res.status === 0 ? 'Could not reach the server. Check your connection.' : (ERRORS[res.body?.error] ?? `Something went wrong (${res.body?.error ?? res.status}).`));

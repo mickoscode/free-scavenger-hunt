@@ -292,3 +292,76 @@ test('the game information is the same at /info (what the pages use and CloudFro
   }
   assert.deepEqual(cacheable, []);
 });
+
+test('score adjustments: one per team, hidden until the final results are published, then counted and explained to the team', async () => {
+  const { w, base, admin, adminBase } = await setup();
+  w.set(GAME_START - 1000);
+  const alpha = await join(w, base, 'Alpha');
+  const beta = await join(w, base, 'Beta');
+  const gamma = await join(w, base, 'Gamma');
+  const adjust = (team, body) => admin.put(`${adminBase}/teams/${team}/adjustment`, body);
+  assert.equal((await adjust(1, { points: 5, reason: 'too early' })).body.error, 'scoring-closed'); // not before the game starts
+
+  w.set(GAME_START + 1000);
+  for (const [zone, question, answer] of [['z1', 'q1', 'Red'], ['z1', 'q2', '2.50']]) await alpha.c.post(`${base}/answer`, { zone, question, answer });
+  await beta.c.post(`${base}/answer`, { zone: 'z1', question: 'q1', answer: 'crimson' });
+  await beta.c.post(`${base}/answer`, { zone: 'z2', question: 'q1', answer: '6' });
+  w.set(GAME_END + 1);
+
+  // checked: points and reason are required, numbers only, 2 decimals at most, within 1000
+  assert.equal((await adjust(1, { points: 5 })).body.error, 'invalid-adjustment');
+  assert.deepEqual((await adjust(1, { points: 5 })).body.problems, ['reason']);
+  assert.deepEqual((await adjust(1, { points: 'lots', reason: 'x' })).body.problems, ['points']);
+  assert.equal((await adjust(1, { points: 5000, reason: 'x' })).status, 400);
+  assert.equal((await adjust(99, { points: 5, reason: 'x' })).body.error, 'no-team');
+  assert.equal((await adjust('abc', { points: 5, reason: 'x' })).body.error, 'no-team');
+
+  // Alpha loses 5, Gamma gains 40 (one each; setting again replaces rather than adds)
+  assert.deepEqual((await adjust(1, { points: -5, reason: '  Late   back ' })).body.adjustment, { points: -5, reason: 'Late back' });
+  assert.equal((await adjust(3, { points: 10, reason: 'First try' })).status, 200);
+  assert.equal((await adjust(3, { points: 40, reason: 'Fair play' })).status, 200);
+  assert.equal((await adjust(2, { points: 7, reason: 'Oops' })).status, 200);
+  assert.equal((await adjust(2, { points: 0 })).status, 200); // 0 removes it
+  assert.equal((await adjust(2, { points: null, reason: 'x' })).status, 200);
+
+  // NOT counted yet: the public scoreboard, the team's own score and the organiser's ranking all still use the running totals
+  let sb = (await client(w).get(`${base}/scoreboard`)).body;
+  assert.deepEqual(sb.teams.map((t) => [t.rank, t.name, t.score]), [[1, 'Alpha', 30], [2, 'Beta', 15], [3, 'Gamma', 0]]);
+  assert.equal((await alpha.c.get(`${base}/me`)).body.score, 30);
+  assert.equal((await gamma.c.get(`${base}/me`)).body.score, 0);
+  assert.equal(JSON.stringify(sb).includes('Fair play'), false);
+  const listed = (await admin.get(`${adminBase}/teams`)).body;
+  assert.deepEqual(listed.teams.map((t) => [t.number, t.rank, t.score, t.adjustment, t.final]),
+    [[1, 1, 30, { points: -5, reason: 'Late back' }, 25], [2, 2, 15, null, 15], [3, 3, 0, { points: 40, reason: 'Fair play' }, 40]]);
+  assert.equal(listed.scoringOpen, true);
+  assert.equal((await alpha.c.get(`${base}/results`)).body.published, false); // and no results yet
+
+  // publish: now they count, everywhere
+  assert.equal((await admin.post(`${adminBase}/publish`, { confirm: true })).body.resultsPublished, true);
+  assert.equal((await adjust(1, { points: 1, reason: 'x' })).body.error, 'results-published'); // read-only while published
+  sb = (await client(w).get(`${base}/scoreboard`)).body;
+  assert.deepEqual(sb.teams.map((t) => [t.rank, t.name, t.score]), [[1, 'Gamma', 40], [2, 'Alpha', 25], [3, 'Beta', 15]]);
+  assert.equal(JSON.stringify(sb).includes('Fair play'), false); // the scoreboard never carries a reason
+  assert.equal((await alpha.c.get(`${base}/me`)).body.score, 25);
+
+  const mine = (await gamma.c.get(`${base}/results`)).body.results;
+  assert.equal(mine.place, 1);
+  assert.equal(mine.total, 40);
+  assert.deepEqual(mine.adjustment, { points: 40, reason: 'Fair play' });
+  const alphaResults = (await alpha.c.get(`${base}/results`)).body.results;
+  assert.deepEqual([alphaResults.place, alphaResults.total, alphaResults.adjustment], [2, 25, { points: -5, reason: 'Late back' }]);
+  assert.equal((await beta.c.get(`${base}/results`)).body.results.adjustment, null);
+
+  // anybody's summary of a team shows the points, never the reason
+  const summary = (await client(w).get(`${base}/results/team/3`)).body.results;
+  assert.deepEqual(summary.adjustment, { points: 40 });
+  assert.equal(JSON.stringify(summary).includes('Fair play'), false);
+  assert.equal(JSON.stringify((await client(w).get(`${base}/results/team/2`)).body).includes('"reason"'), false);
+
+  // back to provisional: the totals are the running totals again, and adjustments can be changed (and removed)
+  await admin.post(`${adminBase}/unpublish`);
+  sb = (await client(w).get(`${base}/scoreboard`)).body;
+  assert.deepEqual(sb.teams.map((t) => [t.name, t.score]), [['Alpha', 30], ['Beta', 15], ['Gamma', 0]]);
+  assert.equal((await adjust(3, { points: 0 })).status, 200);
+  assert.equal((await admin.get(`${adminBase}/teams`)).body.teams.find((t) => t.number === 3).adjustment, null);
+});

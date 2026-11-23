@@ -5,7 +5,7 @@ import { can, DEFAULT_TIME_ZONE, validateConfig } from './lib/gamestate.js';
 import { normaliseJoinCode } from './lib/joincode.js';
 import { randomId } from './lib/passwords.js';
 import { buildResults } from './lib/results.js';
-import { decisionPercent, isDecision, photoPoints } from './lib/scoring.js';
+import { decisionPercent, isDecision, parseAdjustment, photoPoints, roundScore } from './lib/scoring.js';
 import { teamLabel } from './lib/teams.js';
 import { normaliseWhatsappUrl } from './lib/whatsapp.js';
 import { eventState, loadManagedEvent, orgCodeFor, requireUser } from './context.js';
@@ -168,11 +168,29 @@ export function adminRoutes(router, ctx) {
 
   // ---- teams, scoring, results
   router.get('/api/admin/events/:id/teams', async (req) => {
-    const { event } = await managed(req);
+    const { event, status } = await managed(req);
     const teams = await store.listTeams(event.id);
     return json(200, {
-      teams: rankTeams(teams, event).map(({ team, rank }) => ({ number: team.number, name: teamLabel(team, event), rank, done: team.done, score: team.score })),
+      // score: the running total; adjustment: the organiser's (or null); final: what the total becomes once the results are published.
+      // rank follows what the public sees right now (the running totals until the results are published).
+      teams: rankTeams(teams, event).map(({ team, rank }) => ({
+        number: team.number, name: teamLabel(team, event), rank, done: team.done, score: team.base,
+        adjustment: team.adjustment ?? null, final: roundScore(team.base + (team.adjustment?.points ?? 0)),
+      })),
+      resultsPublished: Boolean(event.resultsPublished), scoringOpen: can(status, 'score') && !event.resultsPublished,
     });
+  });
+
+  // One adjustment per team: points (positive or negative) and a reason. Empty or 0 points removes it. It counts only once the results are
+  // published, so it is changed while they are not.
+  router.put('/api/admin/events/:id/teams/:number/adjustment', async (req) => {
+    const { event, status } = await managed(req);
+    if (event.resultsPublished) fail(409, 'results-published');
+    if (!can(status, 'score')) fail(409, 'scoring-closed');
+    const parsed = parseAdjustment(req.body);
+    if (!parsed.ok) fail(400, 'invalid-adjustment', { problems: parsed.problems });
+    if (!/^\d{1,6}$/.test(req.params.number) || !(await store.setAdjustment(event.id, +req.params.number, parsed.adjustment))) fail(400, 'no-team');
+    return json(200, { adjustment: parsed.adjustment });
   });
 
   router.delete('/api/admin/events/:id/teams/:number', async (req) => {
