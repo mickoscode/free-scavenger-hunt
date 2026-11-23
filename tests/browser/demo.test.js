@@ -49,6 +49,12 @@ async function makeMaster(h, zoneNames) {
 test('a new organiser gets a copy of master-demo that opens in 5 minutes, players can play it, and later edits reach only later signups', async () => {
   const h = await launch();
   try {
+    // The demo's window never crosses local midnight (a signup in the last 20 minutes of the day gets 00:01 tomorrow), so the clock this test
+    // fast-forwards is pinned to midday UTC: otherwise it fails whenever it happens to run just before midnight.
+    const midday = new Date();
+    midday.setUTCHours(12, 0, 0, 0);
+    const base = midday.getTime() - Date.now();
+    h.clock.offset = base;
     // before any master-demo exists a new organiser simply has no demo, and nothing is broken
     const none = await signUp(h, 'early');
     assert.equal(await none.locator(`${tid('event-card')}[data-slug="demo-hunt"]`).count(), 0);
@@ -83,7 +89,7 @@ test('a new organiser gets a copy of master-demo that opens in 5 minutes, player
     assert.equal(await t.locator(tid('zone-tile')).count(), 0);
 
     // six minutes after signup the game is on, with the master's zones and pictures
-    h.clock.offset = 6 * 60_000;
+    h.clock.offset = base + 6 * 60_000;
     await t.reload();
     await t.waitForSelector(tid('zone-tile'));
     assert.equal(await t.locator(tid('zone-tile')).count(), 2);
@@ -94,7 +100,7 @@ test('a new organiser gets a copy of master-demo that opens in 5 minutes, player
     await t.fill(`${tid('question')}[data-question="q2"] ${tid('answer-input')}`, 'Perth');
     await t.click(`${tid('question')}[data-question="q2"] ${tid('answer-submit')}`);
     await t.waitForSelector(`${tid('question')}[data-question="q2"][data-state="done"]`);
-    h.clock.offset = 21 * 60_000; // it ends after 15 minutes
+    h.clock.offset = base + 21 * 60_000; // it ends after 15 minutes
     await t.goto(link);
     await t.waitForSelector(tid('results-link'));
     assert.match(await t.textContent(tid('status')), /Game over/);
