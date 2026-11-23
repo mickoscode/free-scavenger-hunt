@@ -7,7 +7,7 @@ export function slugify(text) {
 
 // What a copy of a hunt is called by default: "v2-Summer Fun Hunt" at "v2-summer-fun-hunt". The version is the next one not already in use
 // by one of the organiser's hunts, and an existing "v2-" prefix is replaced rather than stacked ("v3-Summer Fun Hunt", not "v2-v2-...").
-export function duplicateDefaults(name, slug, existingSlugs) {
+export function cloneDefaults(name, slug, existingSlugs) {
   const baseName = String(name).replace(/^v\d+-/i, '');
   const baseSlug = String(slug).replace(/^v\d+-/, '');
   const taken = new Set(existingSlugs);

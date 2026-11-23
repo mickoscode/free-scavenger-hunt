@@ -43,7 +43,7 @@ export function authRoutes(router, ctx) {
     };
     if (!(await store.createUser(user))) fail(409, 'username-taken');
     const org = await orgCodeFor(ctx, user);
-    // A starter hunt, so there is something to play straight away (and to duplicate as a starting point). Its time zone is the browser's.
+    // A starter hunt, so there is something to play straight away (and to clone as a starting point). Its time zone is the browser's.
     await createDemoHunt(ctx, user, org, isTimeZone(timeZone) ? timeZone : undefined);
     return json(200, { user: publicUser(user), recoveryCodes: recovery.codes }, { cookies: [await startAdminSession(ctx, user)] });
   });
