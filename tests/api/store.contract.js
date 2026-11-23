@@ -119,6 +119,25 @@ export function storeContract(name, makeStore) {
     assert.equal((await s.getAnswers('e1', 1))['z1#q3'].decision, 'half');
   });
 
+  t('a team has at most one adjustment: set, replaced, removed; it never touches the running score', async (s) => {
+    await s.createTeam('e1', { name: 'A', key: 'a', secret: 's', createdAt: 1 });
+    await s.putAnswer('e1', 1, 'z1#q1', { kind: 'answer', given: 'x', correct: true, points: 10, at: 1 });
+    assert.equal((await s.getTeam('e1', 1)).adjustment, undefined);
+    assert.equal(await s.setAdjustment('e1', 1, { points: 5, reason: 'Fair play' }), true);
+    assert.deepEqual((await s.getTeam('e1', 1)).adjustment, { points: 5, reason: 'Fair play' });
+    assert.deepEqual((await s.listTeams('e1'))[0].adjustment, { points: 5, reason: 'Fair play' });
+    assert.equal((await s.getTeam('e1', 1)).score, 10); // the running total is separate
+    await s.setAdjustment('e1', 1, { points: -2.5, reason: 'Late back' }); // replaces, never adds
+    assert.deepEqual((await s.getTeam('e1', 1)).adjustment, { points: -2.5, reason: 'Late back' });
+    await s.putAnswer('e1', 1, 'z1#q2', { kind: 'answer', given: 'y', correct: true, points: 4, at: 2 });
+    assert.deepEqual((await s.getTeam('e1', 1)).adjustment, { points: -2.5, reason: 'Late back' }); // later answers leave it alone
+    assert.equal((await s.getTeam('e1', 1)).score, 14);
+    assert.equal(await s.setAdjustment('e1', 1, null), true);
+    assert.equal((await s.getTeam('e1', 1)).adjustment, undefined);
+    assert.equal(await s.setAdjustment('e1', 9, { points: 1, reason: 'x' }), false); // no such team
+    assert.equal(await s.setAdjustment('e1', 9, null), false);
+  });
+
   t('removing a team frees its name and removes its answers; numbers keep counting', async (s) => {
     await s.createTeam('e1', { name: 'A', key: 'a', secret: 's', createdAt: 1 });
     await s.putAnswer('e1', 1, 'z1#q1', { kind: 'answer', points: 1, at: 1 });

@@ -150,6 +150,13 @@ export function createMemoryStore(now = Date.now) {
       team.score = roundScore(team.score + points - previous.points);
       return previous;
     },
+    // The organiser's one adjustment for a team ({ points, reason }), or null to remove it. -> false when there is no such team.
+    async setAdjustment(eventId, n, adjustment) {
+      const team = bucket(eventId).teams.get(n);
+      if (!team) return false;
+      if (adjustment) team.adjustment = { points: adjustment.points, reason: adjustment.reason }; else delete team.adjustment;
+      return true;
+    },
     async deletePlayerData(eventId) { data.delete(eventId); },
   };
 }

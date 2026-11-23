@@ -72,7 +72,7 @@ for (const [label, width] of [['desktop', 1100], ['phone', 360]]) {
       for (const phrase of [
         'Joining a hunt', 'Playing a hunt', 'Provisional and final scores', 'provisional results', 'final results', 'Return to your game',
         'Creating a hunt', 'Clone', 'Export and import', 'Create a new hunt', 'The phases of a hunt', 'Setting up', 'Waiting to start', 'In progress', 'Finished',
-        'Overview', 'Settings', 'Questions', 'Teams', 'Scoring', 'Data', 'Publish final results', 'Delete all player data',
+        'Overview', 'Settings', 'Questions', 'Teams', 'Scoring', 'Data', 'Publish final results', 'Delete all player data', 'Score adjustments', 'bonus or penalty', 'only when you publish the final results', 'and your reason',
         'Share this hunt', 'QR code', 'Download image', 'Print', 'join code', 'Team names', 'WhatsApp group', 'Photo challenges', 'recovery code', 'Limits',
       ]) assert.ok(text.toLowerCase().includes(phrase.toLowerCase()), `says "${phrase}"`);
       // the player part is brief next to the organiser part
@@ -82,6 +82,9 @@ for (const [label, width] of [['desktop', 1100], ['phone', 360]]) {
         return { players: range(document.querySelector('#players'), o), organisers: [...document.querySelectorAll('article > *')].filter((n) => n.compareDocumentPosition(o) & Node.DOCUMENT_POSITION_PRECEDING).reduce((n, e) => n + e.textContent.length, 0) };
       });
       assert.ok(parts.players < parts.organisers / 2, `players ${parts.players} vs organisers ${parts.organisers}`);
+
+      // the page is brief: the whole text stays well short of what it was
+      assert.ok(text.length < 10000, `the help text is ${text.length} characters`);
 
       // the contents jump to the section without changing anything else
       await page.click(`${tid('toc')} a[href="#tab-scoring"]`).catch(async () => { await page.click(`${tid('toc')} a[href="#share"]`); });

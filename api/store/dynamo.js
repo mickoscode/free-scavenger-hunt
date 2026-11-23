@@ -226,6 +226,17 @@ export function createDynamoStore({ tableName, endpoint, now = Date.now, client 
       }
       return strip(old);
     },
+    async setAdjustment(eventId, n, adjustment) {
+      try {
+        await doc.send(new UpdateCommand({
+          TableName: T, Key: { PK: `E#${eventId}`, SK: `T#${pad(n)}` }, ConditionExpression: 'attribute_exists(PK)',
+          ...(adjustment
+            ? { UpdateExpression: 'SET #adj = :a', ExpressionAttributeNames: { '#adj': 'adjustment' }, ExpressionAttributeValues: { ':a': { points: adjustment.points, reason: adjustment.reason } } }
+            : { UpdateExpression: 'REMOVE #adj', ExpressionAttributeNames: { '#adj': 'adjustment' } }),
+        }));
+        return true;
+      } catch (e) { if (isConditionFailure(e)) return false; throw e; }
+    },
     async deletePlayerData(eventId) {
       const PK = `E#${eventId}`;
       const items = (await queryAll({ KeyConditionExpression: 'PK = :pk', ExpressionAttributeValues: { ':pk': PK } }))

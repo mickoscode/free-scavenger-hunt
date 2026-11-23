@@ -6,7 +6,7 @@ import { can } from './lib/gamestate.js';
 import { matchesJoinCode } from './lib/joincode.js';
 import { randomToken } from './lib/passwords.js';
 import { buildResults, summariseResults } from './lib/results.js';
-import { formatScore } from './lib/scoring.js';
+import { effectiveScore, formatScore } from './lib/scoring.js';
 import { sortScoreboard, teamLabel, validateTeamName } from './lib/teams.js';
 import { clientKey, currentTeam, eventState, loadPublicEvent, requireTeam, teamCookie } from './context.js';
 import { fail, json } from './http.js';
@@ -15,8 +15,11 @@ export const MAX_TEAMS = 300;
 const CACHE_SECONDS = 3;
 
 // Teams with the same score share a place (1, 1, 3).
+// The organiser's adjustments count only once the final results are published, so until then the scores are the running totals.
+// Each team comes back with `score` (as shown) and `base` (the running total).
 export function rankTeams(teams, event) {
-  const sorted = sortScoreboard(teams, event.teamNames !== false);
+  const shown = teams.map((t) => ({ ...t, base: t.score, score: effectiveScore(t, event.resultsPublished) }));
+  const sorted = sortScoreboard(shown, event.teamNames !== false);
   return sorted.map((t) => ({ team: t, rank: 1 + sorted.filter((o) => o.score > t.score).length }));
 }
 
@@ -77,7 +80,7 @@ export function publicRoutes(router, ctx) {
     const answers = await store.getAnswers(event.id, team.number);
     const keys = Object.entries(answers);
     return json(200, {
-      number: team.number, name: teamLabel(team, event), score: Number(formatScore(team.score)),
+      number: team.number, name: teamLabel(team, event), score: Number(formatScore(effectiveScore(team, event.resultsPublished))),
       done: { answers: keys.filter(([, r]) => r.kind === 'answer').map(([k]) => k), photos: keys.filter(([, r]) => r.kind === 'photo').map(([k]) => k) },
       whatsappUrl: event.whatsappUrl ?? null,
     });

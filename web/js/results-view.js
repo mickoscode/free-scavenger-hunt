@@ -43,6 +43,17 @@ export function renderResults(container, { name, results }, { withAnswers = true
     medal ? el('span', { role: 'img', 'aria-label': medal[1], class: 'me-2' }, medal[0]) : null,
     own ? `You finished ${ordinal(results.place)} of ${results.teamCount}` : `${name} finished ${ordinal(results.place)} of ${results.teamCount}`);
   const nodes = [heading, el('p', { class: 'text-center fs-4', 'data-testid': 'total' }, `${formatScore(results.total)} points`)];
+  // The organiser's one bonus or penalty, already included in the total above. The reason is for the team itself; a summary shows the points.
+  if (results.adjustment) {
+    const p = results.adjustment.points;
+    const card = el('div', { class: `card card-body mb-3 result-card adjustment-card ${p > 0 ? 'adjustment-up' : 'adjustment-down'}`, 'data-testid': 'result-adjustment', 'data-direction': p > 0 ? 'bonus' : 'penalty' },
+      el('div', { class: 'fw-semibold' }, p > 0 ? 'Bonus from the organiser' : 'Penalty from the organiser'),
+      el('div', { class: 'result-line' },
+        el('span', { class: 'result-status', 'data-testid': 'adjustment-points' }, `${p > 0 ? '+' : '−'}${formatScore(Math.abs(p))} points`),
+        el('span', { class: 'result-points small text-muted' }, 'included in the total above')));
+    if (own && results.adjustment.reason) card.append(el('div', { class: 'mt-1', 'data-testid': 'adjustment-reason' }, results.adjustment.reason));
+    nodes.push(card);
+  }
   if (!withAnswers) nodes.push(el('p', { class: 'text-center text-muted small' }, 'This is a summary: answers are only shown to the team itself.'));
   for (const zone of results.zones) {
     nodes.push(el('h2', { class: 'h5 mt-4 team-name' }, zone.name));
