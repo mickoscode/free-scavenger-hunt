@@ -102,10 +102,12 @@ try {
     const now = new Date();
     const day = now.toISOString().slice(0, 10);
     const hm = (d) => d.toISOString().slice(11, 16);
-    // A window that contains now (the day may roll over within it: only the common case is checked).
-    const start = hm(new Date(now.getTime() - 5 * 60_000));
-    const end = hm(new Date(now.getTime() + 20 * 60_000));
-    assert.ok(start < end, 'run the smoke test away from midnight UTC');
+    // A window that contains now, kept inside today (a game never crosses midnight): near midnight UTC it is clamped to 00:00 or 23:59.
+    const before = new Date(now.getTime() - 5 * 60_000);
+    const after = new Date(now.getTime() + 20 * 60_000);
+    const start = before.toISOString().slice(0, 10) === day ? hm(before) : '00:00';
+    const end = after.toISOString().slice(0, 10) === day ? hm(after) : '23:59';
+    assert.ok(start < end, `the window ${start} to ${end} is not valid`);
     const cfg = await call('PUT', `/api/admin/events/${id}/config`, { name: 'Smoke test hunt', timeZone: 'UTC', day, start, end, teamNames: true, joinCode: '', whatsappUrl: '' });
     assert.equal(cfg.status, 200, cfg.text);
     const content = await call('PUT', `/api/admin/events/${id}/content`, { instructions: '# Hi', zones: [{ id: 'z1', name: 'Zone', map: null, questions: [{ id: 'q1', type: 'whole-number', text: 'Two plus two?', answers: ['4'], score: 5 }] }] });
