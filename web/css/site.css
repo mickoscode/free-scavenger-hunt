@@ -229,3 +229,10 @@ html.smooth-scroll { scroll-behavior: smooth; } /* only the About page has in-pa
   .event-actions { display: grid !important; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); gap: .4rem !important; }
   .event-actions .btn { padding-inline: .15rem; font-size: .8rem; white-space: nowrap; }
 }
+
+/* ---- Help page ---- */
+.toc-group { font-weight: 800; margin: .5rem 0 .1rem; }
+.help-part { margin-top: 2.4rem; padding-top: .4rem; border-top: 3px solid #cfe2ff; }
+.prose h3 { font-size: 1.25rem; font-weight: 800; margin-top: 1.8rem; }
+.prose h4[id], .prose h3[id], .prose section[id] { scroll-margin-top: 1rem; }
+.prose code { overflow-wrap: anywhere; }
