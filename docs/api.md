@@ -18,7 +18,7 @@ JSON over HTTPS under `/api/`. Errors are `{ "error": "<code>" }`. Statuses: 200
 | `GET /api/events/:org/:slug/results/team/:n` | public summary without answers once published |
 
 ## Organisers (`routes-admin.js`), `:id` is the hunt's id
-`GET|POST /api/admin/events` · `GET|DELETE /api/admin/events/:id` · `PUT .../config` · `PUT .../content` · `POST .../zones/:zone/map {thumb,full}` (base64) · `POST .../duplicate {slug,name}` · `GET .../teams` · `DELETE .../teams/:n` · `GET .../teams/:n/results` · `GET .../photos` · `POST .../photos/score {team,zone,question,decision}` · `POST .../publish {confirm:true}` · `POST .../unpublish` · `POST .../player-data/delete {confirm:"delete", override?}`
+`GET|POST /api/admin/events` · `GET|DELETE /api/admin/events/:id` · `PUT .../config` · `PUT .../content` · `POST .../zones/:zone/map {thumb,full}` (base64) · `POST .../duplicate {slug,name}` (the Clone button) · `GET .../teams` · `DELETE .../teams/:n` · `GET .../teams/:n/results` · `GET .../photos` · `POST .../photos/score {team,zone,question,decision}` · `POST .../publish {confirm:true}` · `POST .../unpublish` · `POST .../player-data/delete {confirm:"delete", override?}`
 
 ## Site admin (`routes-site.js`)
 `GET /api/site/users` · `PATCH /api/site/users/:name {status?,maxEvents?}` · `POST /api/site/users/:name/reset-password` · `DELETE /api/site/users/:name {confirm}` · `GET|PUT /api/site/settings {registrationOpen}`. `GET /api/admin/events?all=1` lists every hunt for the site admin.

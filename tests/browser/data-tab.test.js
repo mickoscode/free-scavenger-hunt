@@ -114,7 +114,7 @@ test('Data tab: simple errors, a missing picture is reported, paste works, and n
   }
 });
 
-test('My hunts has a Data button after Duplicate, and the Data tab explains itself with ? toggles; import is locked once teams join', async () => {
+test('My hunts has a Data button after Clone, and the Data tab explains itself with ? toggles; import is locked once teams join', async () => {
   const h = await launch();
   try {
     const { page, api } = await organiser(h, 'fay', (l) => h.phone(l, 360));
@@ -122,7 +122,7 @@ test('My hunts has a Data button after Duplicate, and the Data tab explains itse
     await page.goto(h.url('/admin/'));
     await page.waitForSelector(tid('event-data'));
     const labels = (await page.locator(`${tid('event-card')} .btn:visible`).allTextContents()).map((t) => t.trim());
-    assert.deepEqual(labels, ['Manage ›', 'Test ›', 'Duplicate ›', 'Data ›']);
+    assert.deepEqual(labels, ['Manage ›', 'Play ›', 'Clone ›', 'Data ›']);
     const right = await page.$eval(tid('event-data'), (e) => e.getBoundingClientRect().right);
     assert.ok(right <= 360);
     await page.click(tid('event-data'));

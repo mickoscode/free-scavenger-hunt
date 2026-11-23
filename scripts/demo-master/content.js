@@ -108,7 +108,7 @@ export const CODE_BREAKERS = {
 
 export const INSTRUCTIONS = `# Welcome to the Demo Hunt
 
-This is a practice hunt, made for you so you can try everything straight away. When you are ready, press **Duplicate** next to it under **My hunts** to make your own copy, then change the questions, maps and settings.
+This is a practice hunt, made for you so you can try everything straight away. When you are ready, press **Clone** next to it under **My hunts** to make your own copy, then change the questions, maps and settings.
 
 ## How to play
 

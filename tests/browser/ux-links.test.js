@@ -1,4 +1,4 @@
-// Small navigation conveniences: Back to top, the signed-in state of the public pages, and the Test button on My hunts.
+// Small navigation conveniences: Back to top, the signed-in state of the public pages, and the Play button on My hunts.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { launch, tid } from './helpers.js';
@@ -57,7 +57,7 @@ test('the public pages know the organiser is signed in: Sign out in the header, 
   }
 });
 
-test('My hunts has a Test button next to Manage that goes to the page players see; Manage and the whole card still open the manager', async () => {
+test('My hunts has a Play button next to Manage that goes to the page players see; Manage and the whole card still open the manager', async () => {
   const h = await launch();
   try {
     const { page, api } = await organiser(h, 'ivan');
@@ -65,15 +65,15 @@ test('My hunts has a Test button next to Manage that goes to the page players se
     await page.goto(h.url('/admin/'));
     const card = `${tid('event-card')}[data-slug="try-me"]`;
     await page.waitForSelector(card);
-    assert.equal(await page.getAttribute(`${card} ${tid('event-test')}`, 'href'), `/e/${created.org}/try-me/`);
-    assert.equal((await page.textContent(`${card} ${tid('event-test')}`)).trim(), 'Test ›');
+    assert.equal(await page.getAttribute(`${card} ${tid('event-play')}`, 'href'), `/e/${created.org}/try-me/`);
+    assert.equal((await page.textContent(`${card} ${tid('event-play')}`)).trim(), 'Play ›');
     assert.equal((await page.textContent(`${card} ${tid('event-manage')}`)).trim(), 'Manage ›');
     await h.shot(page, '81-my-hunts-test-button');
 
     // Test: opens the view page in a NEW tab (whatever state the game is in; this one is running) and leaves My hunts open
-    assert.equal(await page.getAttribute(`${card} ${tid('event-test')}`, 'target'), '_blank');
-    assert.match(await page.getAttribute(`${card} ${tid('event-test')}`, 'rel'), /noopener/);
-    const [tab] = await Promise.all([page.context().waitForEvent('page'), page.click(`${card} ${tid('event-test')}`)]);
+    assert.equal(await page.getAttribute(`${card} ${tid('event-play')}`, 'target'), '_blank');
+    assert.match(await page.getAttribute(`${card} ${tid('event-play')}`, 'rel'), /noopener/);
+    const [tab] = await Promise.all([page.context().waitForEvent('page'), page.click(`${card} ${tid('event-play')}`)]);
     await tab.waitForLoadState();
     assert.match(tab.url(), new RegExp(`/e/${created.org}/try-me/$`));
     await tab.waitForSelector(tid('event-name'));

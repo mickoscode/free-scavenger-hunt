@@ -29,7 +29,7 @@ for (const [label, width] of [['desktop', 1100], ['phone', 360]]) {
   });
 }
 
-test('My hunts: the explanations hide behind ? toggles (create form, recovery codes, duplicate) and open when pressed', async () => {
+test('My hunts: the explanations hide behind ? toggles (create form, recovery codes, clone) and open when pressed', async () => {
   const h = await launch();
   try {
     const { ctx, page } = await h.phone('help-dash', 360);
