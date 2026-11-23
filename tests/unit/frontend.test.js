@@ -56,6 +56,9 @@ test('formatting: scores, durations, places', async () => {
   assert.equal(formatDuration(0), '0:00');
   assert.equal(formatDuration(90 * 60_000), '1 h 30 min');
   assert.equal(formatDuration(5 * 24 * 3600_000), '5 days');
+  assert.equal(formatDuration((3 * 24 + 18) * 3600_000 + 40 * 60_000), '4 days'); // rounded up, like the minutes
+  assert.equal(formatDuration(48 * 3600_000 + 60_000), '3 days');
+  assert.equal(formatDuration(47 * 3600_000), '47 h 00 min'); // under 2 days it is hours
   assert.deepEqual([1, 2, 3, 4, 11, 12, 13, 21, 22, 103].map(ordinal), ['1st', '2nd', '3rd', '4th', '11th', '12th', '13th', '21st', '22nd', '103rd']);
 });
 

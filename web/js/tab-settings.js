@@ -33,16 +33,24 @@ export async function mountSettings(body, ctx) {
   const start = i('s-start', { type: 'time', value: c.start, 'data-testid': 'set-start' });
   const end = i('s-end', { type: 'time', value: c.end, 'data-testid': 'set-end' });
   // Start and end stay in order without a word of explanation: changing one moves the other to 10 minutes away if it would be out of order.
-  // Done when a field is left, or a moment after its last change (a half-typed "1" on the way to "18" must not drag the other field around).
-  function guardTimes(changed) {
+  // Done when a field is left, or a moment after its last change (a half-typed "1" on the way to "18" must not drag the other field around),
+  // and always just before saving (Enter or Save pressed while still in a time field). Different browsers and phone pickers report a change
+  // as "input", as "change" or only when the field is left, so all three are listened to.
+  let lastChanged = null;
+  function guardTimes(changed = lastChanged) {
+    if (!changed) return;
     const fixed = keepTimesInOrder(start.value, end.value, changed);
     start.value = fixed.start;
     end.value = fixed.end;
   }
-  for (const [input, name] of [[start, 'start'], [end, 'end']]) {
-    let timer = null;
-    input.addEventListener('change', () => { clearTimeout(timer); timer = setTimeout(() => guardTimes(name), 600); });
-    input.addEventListener('blur', () => { clearTimeout(timer); guardTimes(name); });
+  // ONE pending check for both fields, so the most recent edit always wins (a check still waiting for the start must not fire after the end
+  // was edited and undo it).
+  let timer = null;
+  for (const [input, which] of [[start, 'start'], [end, 'end']]) {
+    const soon = () => { lastChanged = which; clearTimeout(timer); timer = setTimeout(() => guardTimes(which), 600); };
+    input.addEventListener('input', soon);
+    input.addEventListener('change', soon);
+    input.addEventListener('blur', () => { clearTimeout(timer); guardTimes(which); });
   }
   const names = el('input', { id: 's-names', type: 'checkbox', class: 'form-check-input', checked: c.teamNames, 'data-testid': 'set-team-names' });
   const code = i('s-code', { maxlength: '30', value: c.joinCode, autocomplete: 'off', 'data-testid': 'set-join-code' });
@@ -73,6 +81,7 @@ export async function mountSettings(body, ctx) {
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     message.hidden = true;
+    guardTimes(); // the last field changed may still be waiting for its check
     const res = await putJson(`${ctx.base}/config`, {
       name: name.value, timeZone: tz.value, day: day.value, start: start.value, end: end.value, teamNames: names.checked, joinCode: code.value, whatsappUrl: wa.value,
       ...(override.value ? { override: override.value } : {}),
