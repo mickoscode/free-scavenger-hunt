@@ -3,6 +3,7 @@ import { $, el } from './dom.js';
 import { eventBase, eventRef, eventUrl, getJson, postJson, rememberHunt } from './api.js';
 import { createStatusLine } from './clock.js';
 import { renderScoreboard } from './scoreboard-table.js';
+import { showLostHunt } from './lost-hunt.js';
 
 const ref = eventRef();
 const base = eventBase(ref);
@@ -51,7 +52,7 @@ function paintBoard() {
 // asked for once, not on every refresh.
 async function refresh(first = false) {
   const [i, b, m] = await Promise.all([getJson(`${base}/info`), getJson(`${base}/scoreboard`), first ? getJson(`${base}/me`) : null]);
-  if (i.status === 400) { $('[data-testid="load-error"]').hidden = false; return; }
+  if (i.status === 400) { showLostHunt(); return; }
   if (i.ok) { info = i.body; $('[data-testid="event-name"]').textContent = info.name; document.title = info.name; status.update(info); }
   if (b.ok) board = b.body;
   if (m) me = m.ok ? m.body : null;
