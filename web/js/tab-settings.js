@@ -1,6 +1,7 @@
 // Name, time zone, day, start and end, team names, join code and WhatsApp link.
 import { el } from './dom.js';
 import { helpToggle } from './help.js';
+import { keepTimesInOrder } from './time-guard.js';
 import { putJson } from './api.js';
 import { explain } from './admin-shell.js';
 import { fillTimeZones } from './timezones.js';
@@ -31,6 +32,18 @@ export async function mountSettings(body, ctx) {
   const day = i('s-day', { type: 'date', value: c.day, 'data-testid': 'set-day' });
   const start = i('s-start', { type: 'time', value: c.start, 'data-testid': 'set-start' });
   const end = i('s-end', { type: 'time', value: c.end, 'data-testid': 'set-end' });
+  // Start and end stay in order without a word of explanation: changing one moves the other to 10 minutes away if it would be out of order.
+  // Done when a field is left, or a moment after its last change (a half-typed "1" on the way to "18" must not drag the other field around).
+  function guardTimes(changed) {
+    const fixed = keepTimesInOrder(start.value, end.value, changed);
+    start.value = fixed.start;
+    end.value = fixed.end;
+  }
+  for (const [input, name] of [[start, 'start'], [end, 'end']]) {
+    let timer = null;
+    input.addEventListener('change', () => { clearTimeout(timer); timer = setTimeout(() => guardTimes(name), 600); });
+    input.addEventListener('blur', () => { clearTimeout(timer); guardTimes(name); });
+  }
   const names = el('input', { id: 's-names', type: 'checkbox', class: 'form-check-input', checked: c.teamNames, 'data-testid': 'set-team-names' });
   const code = i('s-code', { maxlength: '30', value: c.joinCode, autocomplete: 'off', 'data-testid': 'set-join-code' });
   const wa = i('s-wa', { type: 'url', value: c.whatsappUrl, placeholder: 'https://chat.whatsapp.com/...', 'data-testid': 'set-whatsapp' });
