@@ -114,6 +114,7 @@ async function showDashboard(user) {
       buttons.append(open);
       card.append(dup.form);
     }
+    buttons.append(el('a', { class: 'btn btn-sm btn-outline-secondary event-test', href: `/admin/event/?id=${e.id}#data`, title: 'Export or import this hunt as a file', 'data-testid': 'event-data' }, 'Data ›'));
     return card;
   }));
   const note = $('#limit-note');
