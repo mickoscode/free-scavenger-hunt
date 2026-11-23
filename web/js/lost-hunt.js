@@ -13,9 +13,9 @@ export function showLostHunt() {
   document.body.prepend(el('header', { class: 'site-header', 'data-testid': 'lost-header' },
     el('div', { class: 'container site-header-inner' },
       el('a', { class: 'site-brand', href: '/' }, el('span', { 'aria-hidden': 'true' }, '🧭'), ' Free Scavenger Hunt'),
-      el('nav', { class: 'site-nav', 'aria-label': 'Site' }, el('a', { href: '/about/' }, 'About')))));
+      el('nav', { class: 'site-nav', 'aria-label': 'Site' }, el('a', { href: '/about/' }, 'About'), el('a', { href: '/help/' }, 'Help')))));
   document.body.append(el('footer', { class: 'site-footer', 'data-testid': 'lost-footer' },
     el('div', { class: 'container' },
       el('span', { class: 'footer-made' }, 'Made in Perth, Western Australia'),
-      el('nav', { class: 'footer-links', 'aria-label': 'Footer' }, el('a', { href: '/' }, 'Home'), el('a', { href: '/about/' }, 'About')))));
+      el('nav', { class: 'footer-links', 'aria-label': 'Footer' }, el('a', { href: '/' }, 'Home'), el('a', { href: '/about/' }, 'About'), el('a', { href: '/help/' }, 'Help')))));
 }
