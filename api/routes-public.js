@@ -77,7 +77,7 @@ export function publicRoutes(router, ctx) {
     const answers = await store.getAnswers(event.id, team.number);
     const keys = Object.entries(answers);
     return json(200, {
-      number: team.number, name: teamLabel(team, event),
+      number: team.number, name: teamLabel(team, event), score: Number(formatScore(team.score)),
       done: { answers: keys.filter(([, r]) => r.kind === 'answer').map(([k]) => k), photos: keys.filter(([, r]) => r.kind === 'photo').map(([k]) => k) },
       whatsappUrl: event.whatsappUrl ?? null,
     });

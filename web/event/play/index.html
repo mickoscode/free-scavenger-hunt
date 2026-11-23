@@ -16,7 +16,10 @@
     <a class="btn btn-outline-primary" href="../" data-testid="back-to-board">‹ Scoreboard</a>
     <a class="btn btn-success" href="../results/" data-testid="results-link" hidden>Results</a>
   </nav>
-  <p class="status-line" data-testid="status" aria-live="polite"></p>
+  <div class="status-row">
+    <p class="status-line" data-testid="status" aria-live="polite"></p>
+    <p class="score-line" data-testid="score" hidden></p>
+  </div>
   <p data-testid="message" class="alert alert-info" hidden></p>
   <details class="card card-body mb-3" data-testid="instructions" hidden>
     <summary class="fw-semibold">Instructions (tap to show/hide)</summary>

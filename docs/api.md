@@ -11,7 +11,7 @@ JSON over HTTPS under `/api/`. Errors are `{ "error": "<code>" }`. Statuses: 200
 | `GET /api/events/:org/:slug/info` | name, status, `startMs`/`endMs`/`serverNowMs`, `teamNames`, `joinCodeRequired`, `resultsPublished`. Cacheable 3 s |
 | `GET /api/events/:org/:slug/scoreboard` | `{teams:[{rank,name,done,score,number?}], questionTotal, resultsPublished}`. `number` only once published. Cacheable 3 s |
 | `POST /api/events/:org/:slug/join {name,code}` | sets the team cookie. `wrong-code`, `name-taken`, `invalid-name`, `not-joinable`, `event-full` |
-| `GET /api/events/:org/:slug/me` | team session: number, name, `done:{answers,photos}`, `whatsappUrl` |
+| `GET /api/events/:org/:slug/me` | team session: number, name, `score` (the team's own running total), `done:{answers,photos}`, `whatsappUrl` |
 | `GET /api/events/:org/:slug/play` | team session: `instructions`; `zones` (questions without answers) only while active |
 | `POST /api/events/:org/:slug/answer {zone,question,answer}` · `POST .../photo {zone,question}` | `already-submitted`, `invalid-answer`, `not-playing`, `no-question` |
 | `GET /api/events/:org/:slug/results` | team session: `{published:false}` or the full breakdown |

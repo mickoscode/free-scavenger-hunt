@@ -6,6 +6,10 @@ body { background: #f8f9fa; }
 
 .team-name { overflow-wrap: anywhere; }
 .status-line { font-size: 1.1rem; font-weight: 600; margin-bottom: .75rem; }
+/* the countdown on the left and the team's score on the right, on one row */
+.status-row { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: .1rem .75rem; margin-bottom: .75rem; }
+.status-row .status-line { margin: 0; }
+.score-line { font-size: 1.1rem; font-weight: 700; margin: 0 0 0 auto; color: var(--fsh-blue); text-align: right; }
 .status-line[data-phase="pre"] { color: #b45309; }
 .status-line[data-phase="active"] { color: #15803d; }
 .status-line[data-phase="post"], .status-line[data-phase="unconfigured"] { color: var(--fsh-grey); }
