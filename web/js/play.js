@@ -13,7 +13,15 @@ let info = null;
 let me = null;
 let instructionsKey = null;
 
-const zones = createZones({ container: $('#zones'), base, onSubmitted: () => {} });
+const zones = createZones({ container: $('#zones'), base, onSubmitted: () => refresh() }); // a new answer changes the score: ask again at once
+const scoreLine = $('[data-testid="score"]');
+
+// The team's own running score, on the right of the countdown: shown while the game is on and after it (not before it starts).
+function paintScore() {
+  const phase = status.phase();
+  scoreLine.hidden = !(me && (phase === 'active' || phase === 'post'));
+  if (me) scoreLine.textContent = `Score: ${me.score ?? 0}`;
+}
 
 function paintTeam() {
   $('[data-testid="team-number"]').textContent = `Team ${me.number}`;
@@ -40,6 +48,7 @@ async function loadPlay() {
 function paintPhase() {
   const phase = status.phase();
   $('[data-testid="results-link"]').hidden = !info?.resultsPublished;
+  paintScore();
   message.hidden = phase !== 'post';
   message.textContent = info?.resultsPublished ? 'The game is over. The final results are in!' : 'The game is over. Final results will be published soon!';
   if (phase === 'post' || phase === 'pre' || phase === 'unconfigured') zones.clear();
