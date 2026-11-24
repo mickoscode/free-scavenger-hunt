@@ -35,7 +35,7 @@ export function publicRoutes(router, ctx) {
   const gameInfo = async (req) => {
     const { event, game } = await load(req);
     return json(200, {
-      slug: event.slug, name: event.name, ...game,
+      slug: event.slug, name: event.name, timeZone: event.timeZone, ...game,
       teamNames: event.teamNames !== false, joinCodeRequired: Boolean(event.joinCode), resultsPublished: Boolean(event.resultsPublished),
     }, { cache: CACHE_SECONDS });
   };

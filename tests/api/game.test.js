@@ -58,6 +58,7 @@ test('team numbers start at 1 and the session survives (same cookie = same team)
   assert.equal(b.r.body.number, 2);
   assert.equal((await a.c.get(`${base}/me`)).body.number, 1);
   assert.equal((await a.c.get(`${base}/me`)).body.score, 0); // the team's own running score (a new team has none)
+  assert.equal((await client(w).get(`${base}/info`)).body.timeZone, 'Australia/Perth'); // the pages say when the game starts in the hunt's own time zone
   assert.equal((await client(w).get(`${base}/me`)).status, 401);
   assert.equal((await a.c.get(`${base}/session`)).body.joined, true);
 });
