@@ -25,10 +25,23 @@ test('Help is in the footer after About on every page that has a footer, and now
     for (const p of ['/', '/about/', '/help/', '/admin/']) {
       await page.goto(h.url(p));
       assert.equal(await page.locator('header a[href="/help/"]').count(), 1, `${p}: one Help link in the header`);
-      assert.match((await page.textContent('header a[href="/help/"]')).trim(), /^❓\s*Help$/);
+      assert.match((await page.textContent('header a[href="/help/"]')).trim(), /^🛟\s*Help$/);
       assert.equal(await page.locator('header a[href="/about/"]').count(), 0, `${p}: no About link in the header`);
-      assert.equal(await page.locator('.admin-nav a[href="/help/"], main a[href="/help/"]').count(), p === '/help/' ? 0 : 0, `${p}: not in the organiser bar or the page`);
+      // only the word is underlined, not the icon; and the icon still clicks through (it is inside the link)
+      const deco = await page.$eval('header a[href="/help/"]', (a) => ({
+        link: getComputedStyle(a).textDecorationLine,
+        word: getComputedStyle(a.querySelector('.help-word')).textDecorationLine,
+        wordText: a.querySelector('.help-word').textContent,
+        icon: a.querySelector('[aria-hidden]').textContent,
+        iconInside: a.contains(a.querySelector('[aria-hidden]')),
+      }));
+      assert.deepEqual(deco, { link: 'none', word: 'underline', wordText: 'Help', icon: '🛟', iconInside: true }, `${p}: header Help link`);
+      assert.equal(await page.locator('.admin-nav a[href="/help/"], main a[href="/help/"]').count(), 0, `${p}: not in the organiser bar or the page`);
     }
+    // clicking the icon itself goes to the Help page, like the word
+    await page.goto(h.url('/'));
+    await page.click('header a[href="/help/"] [aria-hidden]');
+    await page.waitForURL((u) => u.pathname === '/help/');
     // the not-found page's header matches
     await page.goto(h.url('/e/zzzz/never-was/'));
     await page.waitForSelector(tid('lost-header'));
