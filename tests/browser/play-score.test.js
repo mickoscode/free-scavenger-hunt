@@ -61,7 +61,7 @@ for (const [label, width] of [['desktop', 1100], ['phone', 360]]) {
 
       // after the game: still shown (provisional) ; before the game: not shown
       assert.equal((await cfg('00:00', '00:01')).status(), 200); // (the day is today; the clock moves on)
-      h.clock.offset = 2 * 3600 * 1000;
+      h.clock.offset += 2 * 3600 * 1000;
       await page.reload();
       await page.waitForSelector(tid('message'));
       assert.equal((await page.textContent(tid('score'))).trim(), 'Score: 20');

@@ -146,7 +146,7 @@ test('organiser builds a hunt, teams play it, results are published', async () =
     await h.shot(a, '07-teams');
 
     // ---- the game ends: the pages notice, the organiser publishes
-    h.clock.offset = 48 * 3600 * 1000;
+    h.clock.offset += 48 * 3600 * 1000;
     await t1.goto(link);
     await t1.waitForSelector(tid('results-link'));
     assert.equal(await t1.isVisible(tid('play-link')), false);

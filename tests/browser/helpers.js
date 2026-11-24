@@ -4,7 +4,13 @@ import { chromium } from 'playwright';
 import { startDevServer } from '../../scripts/dev-server.js';
 
 export async function launch() {
-  const clock = { offset: 0 };
+  // Many tests build "a game today from 00:00 to 23:59", and a demo hunt never crosses local midnight, so a run that happens to start (or
+  // straddle) midnight UTC would fail by chance. Within 30 minutes of UTC midnight the test clock therefore starts at midday instead.
+  // FSH_TEST_MIDDAY_CLOCK=1 forces that, to check the whole suite behaves the same.
+  const DAY = 86_400_000;
+  const sinceMidnight = Date.now() % DAY;
+  const nearMidnight = process.env.FSH_TEST_MIDDAY_CLOCK === '1' || sinceMidnight < 30 * 60_000 || sinceMidnight > DAY - 30 * 60_000;
+  const clock = { offset: nearMidnight ? DAY / 2 - sinceMidnight : 0 };
   const now = () => Date.now() + clock.offset;
   const app = await startDevServer({ port: 0, now, quiet: true });
   const browser = await chromium.launch();
