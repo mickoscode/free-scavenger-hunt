@@ -34,7 +34,7 @@ for (const [label, width] of [['desktop', 1100], ['phone', 360]]) {
       }
       // the game is over
       assert.equal((await cfg('00:00', '00:01')).status(), 200);
-      h.clock.offset = 2 * 3600 * 1000;
+      h.clock.offset += 2 * 3600 * 1000;
 
       await org.page.goto(h.url(`/admin/event/?id=${made.id}#scoring`));
       await org.page.waitForSelector(tid('adjust-row'));
