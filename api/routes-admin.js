@@ -171,10 +171,10 @@ export function adminRoutes(router, ctx) {
     const { event, status } = await managed(req);
     const teams = await store.listTeams(event.id);
     return json(200, {
-      // score: the running total; adjustment: the organiser's (or null); final: what the total becomes once the results are published.
-      // rank follows what the public sees right now (the running totals until the results are published).
+      // shown: the score the public scoreboard shows right now (the running total, plus the adjustment once the results are published), and
+      // rank follows it. score: the running total; adjustment: the organiser's (or null); final: the total with the adjustment, published or not.
       teams: rankTeams(teams, event).map(({ team, rank }) => ({
-        number: team.number, name: teamLabel(team, event), rank, done: team.done, score: team.base,
+        number: team.number, name: teamLabel(team, event), rank, done: team.done, shown: team.score, score: team.base,
         adjustment: team.adjustment ?? null, final: roundScore(team.base + (team.adjustment?.points ?? 0)),
       })),
       resultsPublished: Boolean(event.resultsPublished), scoringOpen: can(status, 'score') && !event.resultsPublished,
