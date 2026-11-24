@@ -84,12 +84,34 @@ for (const [label, width] of [['desktop', 1100], ['phone', 360]]) {
       assert.equal((await (await alpha.ctx.request.fetch(h.url(`${join}/me`))).json()).score, 10);
       assert.match(await org.page.textContent(tid('adjusted-line')), /2 teams have a score adjustment: it is added when you publish/);
 
+      // before publishing the Teams tab also shows the running totals, like the public scoreboard
+      await org.page.goto(h.url(`/admin/event/?id=${made.id}#teams`));
+      await org.page.reload();
+      await org.page.waitForSelector(tid('team-row'));
+      assert.deepEqual((await org.page.$$eval('[data-testid="team-row"]', (rs) => rs.map((r) => [r.children[2].textContent.replace(' ›', ''), r.children[4].textContent]))).find(([n]) => n === 'Alpha'), ['Alpha', '10']);
+      await org.page.goto(h.url(`/admin/event/?id=${made.id}#scoring`));
+      await org.page.reload();
+      await org.page.waitForSelector(tid('applied-all'));
+
       // publish; the rows become read-only
       await org.page.check(tid('applied-all'));
       await org.page.click(tid('publish'));
       await org.page.waitForSelector(tid('unpublish'));
       await org.page.waitForFunction(() => document.querySelector('[data-testid="adj-points"]').disabled);
       assert.equal(await org.page.locator(tid('adjust-note')).textContent().then((t) => /read-only/.test(t)), true);
+
+      // the organiser's Teams tab shows the same scores as the public scoreboard: adjustments included, same order
+      await org.page.goto(h.url(`/admin/event/?id=${made.id}#teams`));
+      await org.page.reload();
+      await org.page.waitForSelector(tid('team-row'));
+      const shownRows = async () => org.page.$$eval('[data-testid="team-row"]', (rs) => rs.map((r) => [r.children[2].textContent.replace(' ›', ''), r.children[4].textContent]));
+      const publicRows = (await board()).teams.map((t) => [t.name, String(t.score)]);
+      assert.deepEqual(await shownRows(), publicRows);
+      assert.deepEqual(publicRows.find(([n]) => n === 'Alpha'), ['Alpha', '5']); // 10 - 5
+      assert.deepEqual(publicRows.find(([n]) => n === 'Bravo'), ['Bravo', '3.5']); // 0 + 3.5
+      await org.page.goto(h.url(`/admin/event/?id=${made.id}#scoring`));
+      await org.page.reload();
+      await org.page.waitForSelector(tid('unpublish'));
 
       // now they count: scoreboard, and Alpha's results page shows the penalty and the reason
       const after = (await board()).teams;

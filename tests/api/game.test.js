@@ -334,6 +334,7 @@ test('score adjustments: one per team, hidden until the final results are publis
   const listed = (await admin.get(`${adminBase}/teams`)).body;
   assert.deepEqual(listed.teams.map((t) => [t.number, t.rank, t.score, t.adjustment, t.final]),
     [[1, 1, 30, { points: -5, reason: 'Late back' }, 25], [2, 2, 15, null, 15], [3, 3, 0, { points: 40, reason: 'Fair play' }, 40]]);
+  assert.deepEqual(listed.teams.map((t) => t.shown), [30, 15, 0]); // the Teams tab shows what the public sees: no adjustments yet
   assert.equal(listed.scoringOpen, true);
   assert.equal((await alpha.c.get(`${base}/results`)).body.published, false); // and no results yet
 
@@ -344,6 +345,10 @@ test('score adjustments: one per team, hidden until the final results are publis
   assert.deepEqual(sb.teams.map((t) => [t.rank, t.name, t.score]), [[1, 'Gamma', 40], [2, 'Alpha', 25], [3, 'Beta', 15]]);
   assert.equal(JSON.stringify(sb).includes('Fair play'), false); // the scoreboard never carries a reason
   assert.equal((await alpha.c.get(`${base}/me`)).body.score, 25);
+  // the organiser's own Teams list matches the public scoreboard, adjustments included, in the same order
+  const after = (await admin.get(`${adminBase}/teams`)).body.teams;
+  assert.deepEqual(after.map((t) => [t.rank, t.name, t.shown]), sb.teams.map((t) => [t.rank, t.name, t.score]));
+  assert.deepEqual(after.map((t) => t.score), [0, 30, 15]); // the running totals (Gamma, Alpha, Beta) are still there beside the adjusted ones
 
   const mine = (await gamma.c.get(`${base}/results`)).body.results;
   assert.equal(mine.place, 1);

@@ -46,7 +46,7 @@ export async function mountTeams(body, ctx) {
       });
       return el('tr', { 'data-testid': 'team-row' },
         el('td', {}, String(t.rank)), el('td', {}, String(t.number)), el('td', {}, view), el('td', {}, `${t.done}/${total}`),
-        el('td', { class: 'text-end' }, formatScore(t.score)), el('td', { class: 'text-end' }, remove));
+        el('td', { class: 'text-end', 'data-testid': 'team-score' }, formatScore(t.shown)), el('td', { class: 'text-end' }, remove));
     });
     table.replaceChildren(el('div', { class: 'table-responsive' }, el('table', { class: 'table table-sm align-middle' },
       el('thead', {}, el('tr', {}, ...['rank', 'team', 'name', 'done'].map((h) => el('th', {}, h)), el('th', { class: 'text-end' }, 'score'), el('th', {}))),
