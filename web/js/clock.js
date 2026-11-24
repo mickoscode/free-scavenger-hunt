@@ -1,6 +1,6 @@
 // The countdown. The browser only displays it: the server decides everything. The server's clock is used (not the
 // phone's), by remembering the difference when the game information arrives.
-import { formatDuration, STATUS_TEXT } from './format.js';
+import { formatDuration, preStartText, STATUS_TEXT } from './format.js';
 
 export function createStatusLine(node) {
   let info = null;
@@ -21,7 +21,8 @@ export function createStatusLine(node) {
     const now = Date.now() + offset;
     node.dataset.phase = status;
     const countdown = status === 'pre' ? info.startMs - now : status === 'active' ? info.endMs - now : null;
-    node.textContent = countdown === null ? STATUS_TEXT[status] : `${STATUS_TEXT[status]}: ${formatDuration(countdown)}`;
+    node.textContent = status === 'pre' ? preStartText(info.startMs, now, info.timeZone)
+      : countdown === null ? STATUS_TEXT[status] : `${STATUS_TEXT[status]}: ${formatDuration(countdown)}`;
     return status;
   }
 

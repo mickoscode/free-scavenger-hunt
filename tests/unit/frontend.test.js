@@ -94,3 +94,30 @@ test('the 404 page carries its own content security policy (CloudFront adds head
   assert.doesNotMatch(policy, /script-src|unsafe/); // no scripts at all
   assert.doesNotMatch(html, /<script/i);
 });
+
+test('before the start: the time and date when it is another day, a countdown only on the day itself', async () => {
+  const { preStartText } = await import('../../web/js/format.js');
+  const perth = 'Australia/Perth';
+  const at = (iso) => Date.parse(iso);
+  const start = at('2026-11-27T08:50:00Z'); // 16:50 on Friday 27 Nov in Perth
+  // another day (the hunt's own days): a clear time and date, however near or far
+  assert.equal(preStartText(start, at('2026-11-24T00:10:00Z'), perth), 'Game starts at 16:50 on Friday 27 Nov');
+  assert.equal(preStartText(start, at('2026-11-26T04:00:00Z'), perth), 'Game starts at 16:50 on Friday 27 Nov'); // the day before
+  assert.equal(preStartText(start, at('2026-11-26T15:59:00Z'), perth), 'Game starts at 16:50 on Friday 27 Nov'); // 23:59 Perth, still yesterday
+  // the same day (Perth): hours, then minutes, then m:ss
+  assert.equal(preStartText(start, at('2026-11-26T16:00:00Z'), perth), 'Game starts in 17 hours'); // 00:00 Friday Perth
+  assert.equal(preStartText(start, at('2026-11-27T03:50:00Z'), perth), 'Game starts in 5 hours'); // 11:50 Perth
+  assert.equal(preStartText(start, at('2026-11-27T04:50:00Z'), perth), 'Game starts in 4 hours');
+  assert.equal(preStartText(start, at('2026-11-27T05:30:00Z'), perth), 'Game starts in 4 hours'); // 3 h 20 min left rounds up
+  assert.equal(preStartText(start, at('2026-11-27T07:50:00Z'), perth), 'Game starts in 1 hour');
+  assert.equal(preStartText(start, at('2026-11-27T07:51:00Z'), perth), 'Game starts in 59 min');
+  assert.equal(preStartText(start, at('2026-11-27T08:44:00Z'), perth), 'Game starts in 6 min');
+  assert.equal(preStartText(start, at('2026-11-27T08:45:00Z'), perth), 'Game starts in 5:00');
+  assert.equal(preStartText(start, at('2026-11-27T08:49:30Z'), perth), 'Game starts in 0:30');
+  // it is the HUNT's time zone that counts, not the viewer's or UTC: the same instants in Sydney (+11) and UTC
+  assert.equal(preStartText(start, at('2026-11-27T01:00:00Z'), 'UTC'), 'Game starts in 8 hours'); // same UTC day
+  assert.equal(preStartText(start, at('2026-11-27T01:00:00Z'), 'Pacific/Auckland'), 'Game starts in 8 hours'); // 14:00 for a 21:50 start, same NZ day
+  assert.equal(preStartText(start, at('2026-11-26T09:00:00Z'), 'Pacific/Auckland'), 'Game starts at 21:50 on Friday 27 Nov'); // 22:00 the evening before
+  // a time zone the browser does not know falls back to UTC instead of breaking the page
+  assert.equal(preStartText(start, at('2026-11-24T00:10:00Z'), 'Nowhere/Land'), 'Game starts at 08:50 on Friday 27 Nov');
+});

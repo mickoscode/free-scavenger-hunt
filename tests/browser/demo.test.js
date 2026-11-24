@@ -80,7 +80,7 @@ test('a new organiser gets a copy of master-demo that opens in 5 minutes, player
     const t = p.page;
     await t.goto(link);
     await t.waitForSelector(tid('join-button'));
-    assert.match(await t.textContent(tid('status')), /Game starts in: (\d+ min|\d+:\d{2})/);
+    assert.match(await t.textContent(tid('status')), /Game starts in (\d+ min|\d+:\d{2})/);
     assert.equal(await t.locator('a[href="/"]').count(), 0);
     await t.fill(tid('team-name'), 'Early Birds');
     await t.click(tid('join-button'));
