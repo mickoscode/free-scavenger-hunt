@@ -21,11 +21,18 @@ test('Help is in the footer after About on every page that has a footer, and now
     await page.goto(h.url('/admin/'));
     await page.waitForSelector(tid('login-button'));
     assert.deepEqual(await footerLinks(page), ['Home=/', 'About=/about/', 'Help=/help/']);
-    // only in the footer: not in any header or nav
-    for (const p of ['/', '/about/', '/admin/']) {
+    // the public header has Help (with a small icon) where About used to be; About is in the footer only; the organiser bar and page text have neither
+    for (const p of ['/', '/about/', '/help/', '/admin/']) {
       await page.goto(h.url(p));
-      assert.equal(await page.locator('header a[href="/help/"], .admin-nav a[href="/help/"], main a[href="/help/"]').count(), 0, `${p}: Help only in the footer`);
+      assert.equal(await page.locator('header a[href="/help/"]').count(), 1, `${p}: one Help link in the header`);
+      assert.match((await page.textContent('header a[href="/help/"]')).trim(), /^❓\s*Help$/);
+      assert.equal(await page.locator('header a[href="/about/"]').count(), 0, `${p}: no About link in the header`);
+      assert.equal(await page.locator('.admin-nav a[href="/help/"], main a[href="/help/"]').count(), p === '/help/' ? 0 : 0, `${p}: not in the organiser bar or the page`);
     }
+    // the not-found page's header matches
+    await page.goto(h.url('/e/zzzz/never-was/'));
+    await page.waitForSelector(tid('lost-header'));
+    assert.deepEqual(await page.$$eval(`${tid('lost-header')} .site-nav a`, (e) => e.map((a) => a.getAttribute('href'))), ['/help/']);
     // organiser pages
     assert.equal((await api('POST', '/api/auth/register', { username: 'helper', password: 'purple-giraffe-lunch-42', timeZone: 'UTC' })).status(), 200);
     const made = await (await api('POST', '/api/admin/events', { slug: 'help-hunt', name: 'Help', timeZone: 'UTC' })).json();

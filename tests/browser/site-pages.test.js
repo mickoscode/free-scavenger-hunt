@@ -34,7 +34,7 @@ test('the front page keeps its original wording, is inviting, and leads to About
       assert.ok(below, `${label}: the footer links belong on their own line below the text`);
       await h.shot(page, `50-front-${label}`);
 
-      await page.click(tid('about-link'));
+      await page.click(tid('footer-about')); // About is in the footer
       await page.waitForURL(/\/about\/$/);
       assert.match(await page.textContent(tid('about-title')), /About Free Scavenger Hunt/);
       assert.doesNotMatch(await page.textContent('.about-hero'), /volunteer in Perth|Western Australia/); // the owner asked for the top section to stay free of this
@@ -92,7 +92,7 @@ test('the organiser page leads home and to About when signed out, keeps its foot
       await page.waitForSelector(tid('login-button'));
       assert.equal(await page.locator(tid('public-header')).isVisible(), true);
       assert.equal(await page.getAttribute(tid('brand-home'), 'href'), '/');
-      assert.equal(await page.getAttribute(tid('nav-about'), 'href'), '/about/');
+      assert.equal(await page.getAttribute(tid('nav-help'), 'href'), '/help/');
       assert.equal(await page.getAttribute(tid('playing-home'), 'href'), '/');
       assert.equal(await page.getAttribute(tid('footer-home'), 'href'), '/');
       assert.equal(await page.getAttribute(tid('footer-about'), 'href'), '/about/');
@@ -103,7 +103,7 @@ test('the organiser page leads home and to About when signed out, keeps its foot
       await page.click(tid('footer-home'));
       await page.waitForURL((u) => u.pathname === '/');
       await page.goto(h.url('/admin/'));
-      await page.click(tid('nav-about'));
+      await page.click(tid('footer-about'));
       await page.waitForURL(/\/about\/$/);
     }
     // signed in: the public header gives way to the organiser bar, and the footer stays (Home and About)
