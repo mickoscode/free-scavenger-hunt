@@ -94,6 +94,9 @@ body.home { background: #fffdf8; }
 .site-nav { display: flex; align-items: center; gap: 1rem; }
 .site-nav a:not(.btn) { font-weight: 600; color: #343a40; }
 .site-nav a[aria-current="page"] { color: var(--fsh-blue); }
+/* The Help link: the icon is not underlined, only the word (an underline on the link would run under the icon too; a child cannot switch it off) */
+.site-nav a.help-link { text-decoration: none; }
+.site-nav a.help-link .help-word { text-decoration: underline; }
 
 .home-hero { position: relative; overflow: hidden; padding: 2.25rem 0 3rem; background: linear-gradient(135deg, #e7f1ff 0%, #fff3d9 55%, #ffe6f0 100%); border-radius: 0 0 2.25rem 2.25rem; }
 .home-hero > .container { position: relative; z-index: 1; }
