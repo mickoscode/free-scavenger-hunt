@@ -55,7 +55,7 @@ node scripts/load-test.js https://xxxx.cloudfront.net          # prints the plan
 node scripts/load-test.js https://xxxx.cloudfront.net --yes    # runs it (about 26,000 requests, 6 minutes, hard cap 50,000)
 ```
 
-Every request counts toward the CloudFront plan's monthly request allowance (the Free plan: 1 M requests), so check the balance first (CloudWatch metric `Requests` for the distribution, region us-east-1). It comes from one address, so it can join at most about 28 teams (the API allows 30 joins per hour per address per hunt), and it refuses to run within 45 minutes of midnight UTC. A few 429 answers in the *ceiling* phase are expected: that is the API throttle working.
+Every request counts toward the CloudFront plan's monthly request allowance (the Free plan: 1 M requests), so check the balance first (CloudWatch metric `Requests` for the distribution, region us-east-1). It comes from one address, so it can join at most about 28 teams (the API allows 30 joins per hour per address per hunt), and it refuses to run between 23:30 and 00:15 UTC (the throwaway hunt is a game "today" in UTC). A few 429 answers in the *ceiling* phase are expected: that is the API throttle working.
 
 ## Resetting organiser data (once, when addresses changed shape)
 
