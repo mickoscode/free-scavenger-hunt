@@ -4,13 +4,13 @@ import { chromium } from 'playwright';
 import { startDevServer } from '../../scripts/dev-server.js';
 
 export async function launch() {
-  // Many tests build "a game today from 00:00 to 23:59", and a demo hunt never crosses local midnight, so a run that happens to start (or
-  // straddle) midnight UTC would fail by chance. Within 30 minutes of UTC midnight the test clock therefore starts at midday instead.
-  // FSH_TEST_MIDDAY_CLOCK=1 forces that, to check the whole suite behaves the same.
+  // The tests must not depend on the time of day they happen to run at. A new hunt's default game is 09:00 to 12:00 (in its time zone), which
+  // is "in progress", with its settings locked, if a test runs then; tests build "a game today, 00:00 to 23:59", which breaks within minutes of
+  // midnight; and a demo hunt never crosses local midnight. So the test clock always starts at 14:00 UTC today (22:00 in Perth): clear of
+  // the default window in UTC and in Perth, and far from midnight in both. FSH_TEST_REAL_CLOCK=1 uses the real clock instead.
   const DAY = 86_400_000;
-  const sinceMidnight = Date.now() % DAY;
-  const nearMidnight = process.env.FSH_TEST_MIDDAY_CLOCK === '1' || sinceMidnight < 30 * 60_000 || sinceMidnight > DAY - 30 * 60_000;
-  const clock = { offset: nearMidnight ? DAY / 2 - sinceMidnight : 0 };
+  const startOfDay = Date.now() - (Date.now() % DAY);
+  const clock = { offset: process.env.FSH_TEST_REAL_CLOCK === '1' ? 0 : startOfDay + 14 * 3_600_000 - Date.now() };
   const now = () => Date.now() + clock.offset;
   const app = await startDevServer({ port: 0, now, quiet: true });
   const browser = await chromium.launch();
