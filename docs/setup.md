@@ -46,6 +46,17 @@ If the app needs a new AWS service (for example Cognito or SES), add its permiss
 
 Not yet configured: the site is served from the `site_url` output (a `*.cloudfront.net` address).
 
+## Load test (a deployed site)
+
+`scripts/load-test.js` runs a capped load test with a throwaway organiser and hunt that it deletes at the end (it never touches an existing hunt). It simulates an event's traffic compressed into minutes: everybody opening the page, spectators on the scoreboard, teams playing and answering, organiser tabs, a spike with more spectators, and a burst of uncached API calls to see the API's request limit and the recovery. It checks the scoreboard adds up and prints response times, cache hits, errors and PASS/FAIL checks (exit code 1 on a failure).
+
+```sh
+node scripts/load-test.js https://xxxx.cloudfront.net          # prints the plan and its request budget, sends nothing
+node scripts/load-test.js https://xxxx.cloudfront.net --yes    # runs it (about 26,000 requests, 6 minutes, hard cap 50,000)
+```
+
+Every request counts toward the CloudFront plan's monthly request allowance (the Free plan: 1 M requests), so check the balance first (CloudWatch metric `Requests` for the distribution, region us-east-1). It comes from one address, so it can join at most about 28 teams (the API allows 30 joins per hour per address per hunt), and it refuses to run within 45 minutes of midnight UTC. A few 429 answers in the *ceiling* phase are expected: that is the API throttle working.
+
 ## Resetting organiser data (once, when addresses changed shape)
 
 Hunt addresses gained an organiser code (`/e/<code>/<hunt>/`), so hunts created before that cannot be reached. To clear old test organisers, hunts and pictures (the site admin is never touched), from a computer with AWS credentials:
