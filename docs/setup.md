@@ -55,7 +55,20 @@ node scripts/load-test.js https://xxxx.cloudfront.net          # prints the plan
 node scripts/load-test.js https://xxxx.cloudfront.net --yes    # runs it (about 26,000 requests, 6 minutes, hard cap 50,000)
 ```
 
-Every request counts toward the CloudFront plan's monthly request allowance (the Free plan: 1 M requests), so check the balance first (CloudWatch metric `Requests` for the distribution, region us-east-1). It comes from one address, so it can join at most about 28 teams (the API allows 30 joins per hour per address per hunt), and it refuses to run between 23:30 and 00:15 UTC (the throwaway hunt is a game "today" in UTC). A few 429 answers in the *ceiling* phase are expected: that is the API throttle working.
+Every request counts toward the CloudFront plan's monthly request allowance (the Free plan: 1 M requests), so check the balance first with `node scripts/usage-report.js` (below). It comes from one address, so it can join at most about 28 teams (the API allows 30 joins per hour per address per hunt), and it refuses to run between 23:30 and 00:15 UTC (the throwaway hunt is a game "today" in UTC). A few 429 answers in the *ceiling* phase are expected: that is the API throttle working.
+
+## Usage report (the request allowance)
+
+`scripts/usage-report.js` reads CloudWatch and shows how much of the CloudFront plan's monthly request allowance (the Free plan: 1 M requests) is used, day by day, with the API calls and data sent alongside. It is read-only. Run it from a computer with the AWS CLI signed in as the administrator:
+
+```sh
+node scripts/usage-report.js                                          # this month so far, per day, against the allowance
+node scripts/usage-report.js --day 2026-11-27                         # plus that day hour by hour (the whole day, before and after an event)
+node scripts/usage-report.js --day 2026-11-27 --window 16:45-18:20    # plus the window's total, average and busiest 5 minutes (the game)
+node scripts/usage-report.js --month 2026-12 --tz Australia/Sydney    # another month or time zone (default Australia/Perth)
+```
+
+Days and hours are in the chosen time zone; the allowance month is the UTC month. CloudWatch lags a few minutes, and `Requests` counts everything CloudFront received (AWS does not count firewall-blocked requests against the allowance), so the report errs on the high side. The authoritative balance is in the CloudFront console. Going over the allowance has no overage charge (AWS adjusts delivery only after sustained excess over several months; the first spike up to 3x in a month is free of effect).
 
 ## Resetting organiser data (once, when addresses changed shape)
 
