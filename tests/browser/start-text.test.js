@@ -35,9 +35,9 @@ test('the hunt page and the play page say when the game starts, and count down o
 
     // the day itself: hours, then minutes, then m:ss
     for (const [now, text] of [
-      ['2027-03-06T00:05:00Z', 'Game starts in 9 hours'], // 8 h 25 min to go
-      ['2027-03-06T03:00:00Z', 'Game starts in 6 hours'],
-      ['2027-03-06T07:30:00Z', 'Game starts in 1 hour'],
+      ['2027-03-06T00:05:00Z', 'Game starts in 8 hours'], // 8 h 25 min to go: rounded down
+      ['2027-03-06T03:00:00Z', 'Game starts in 5 h 30 min'], // under 6 hours: by the minute
+      ['2027-03-06T07:30:00Z', 'Game starts in 1 h 00 min'],
       ['2027-03-06T07:45:00Z', 'Game starts in 45 min'],
       ['2027-03-06T08:24:00Z', 'Game starts in 6 min'],
       ['2027-03-06T08:27:00Z', 'Game starts in 3:00'],
@@ -53,7 +53,7 @@ test('the hunt page and the play page say when the game starts, and count down o
     assert.equal((await player.ctx.request.fetch(h.url(`/api/events/${made.org}/when-hunt/join`), { method: 'POST', data: { name: 'Early' }, headers: J })).status(), 200);
     setClock('2027-03-06T03:00:00Z');
     await player.page.goto(`${view}play/`);
-    await says(player.page, 'Game starts in 6 hours');
+    await says(player.page, 'Game starts in 5 h 30 min');
     setClock('2027-03-06T08:31:00Z');
     await player.page.reload();
     await player.page.waitForFunction(() => /^Time left: /.test(document.querySelector('[data-testid="status"]').textContent), null, { timeout: 8000 });
