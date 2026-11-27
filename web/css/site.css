@@ -254,3 +254,7 @@ html.smooth-scroll { scroll-behavior: smooth; } /* only the About page has in-pa
 .adjustment-down { border-left-color: #dc3545; }
 .adjustment-up .result-status { color: #146c43; }
 .adjustment-down .result-status { color: #b02a37; }
+
+/* The open team on the Teams tab: its answers sit in a row right under it */
+.team-open > td { background: #e7f1ff; }
+.team-detail-row > td { padding: .75rem .25rem 1rem; background: #f8f9fa; }
