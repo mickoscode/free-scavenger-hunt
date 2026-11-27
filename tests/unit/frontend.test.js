@@ -105,18 +105,22 @@ test('before the start: the time and date when it is another day, a countdown on
   assert.equal(preStartText(start, at('2026-11-26T04:00:00Z'), perth), 'Game starts at 16:50 on Friday 27 Nov'); // the day before
   assert.equal(preStartText(start, at('2026-11-26T15:59:00Z'), perth), 'Game starts at 16:50 on Friday 27 Nov'); // 23:59 Perth, still yesterday
   // the same day (Perth): hours, then minutes, then m:ss
-  assert.equal(preStartText(start, at('2026-11-26T16:00:00Z'), perth), 'Game starts in 17 hours'); // 00:00 Friday Perth
-  assert.equal(preStartText(start, at('2026-11-27T03:50:00Z'), perth), 'Game starts in 5 hours'); // 11:50 Perth
-  assert.equal(preStartText(start, at('2026-11-27T04:50:00Z'), perth), 'Game starts in 4 hours');
-  assert.equal(preStartText(start, at('2026-11-27T05:30:00Z'), perth), 'Game starts in 4 hours'); // 3 h 20 min left rounds up
-  assert.equal(preStartText(start, at('2026-11-27T07:50:00Z'), perth), 'Game starts in 1 hour');
+  assert.equal(preStartText(start, at('2026-11-26T16:00:00Z'), perth), 'Game starts in 16 hours'); // 00:00 Friday Perth, 16 h 50 min to go: rounded DOWN
+  assert.equal(preStartText(start, at('2026-11-27T02:50:00Z'), perth), 'Game starts in 6 hours'); // exactly 6 h: still whole hours
+  assert.equal(preStartText(start, at('2026-11-27T02:51:00Z'), perth), 'Game starts in 5 h 59 min'); // under 6 h: by the minute
+  assert.equal(preStartText(start, at('2026-11-27T03:50:00Z'), perth), 'Game starts in 5 h 00 min'); // 11:50 Perth
+  assert.equal(preStartText(start, at('2026-11-27T04:50:00Z'), perth), 'Game starts in 4 h 00 min');
+  assert.equal(preStartText(start, at('2026-11-27T05:30:00Z'), perth), 'Game starts in 3 h 20 min'); // never rounded up to "4 hours"
+  // the real case: 14:19 in Perth with a 16:45 start is 2 h 26 min, not "3 hours"
+  assert.equal(preStartText(at('2026-11-27T08:45:00Z'), at('2026-11-27T06:19:00Z'), perth), 'Game starts in 2 h 26 min');
+  assert.equal(preStartText(start, at('2026-11-27T07:50:00Z'), perth), 'Game starts in 1 h 00 min');
   assert.equal(preStartText(start, at('2026-11-27T07:51:00Z'), perth), 'Game starts in 59 min');
   assert.equal(preStartText(start, at('2026-11-27T08:44:00Z'), perth), 'Game starts in 6 min');
   assert.equal(preStartText(start, at('2026-11-27T08:45:00Z'), perth), 'Game starts in 5:00');
   assert.equal(preStartText(start, at('2026-11-27T08:49:30Z'), perth), 'Game starts in 0:30');
   // it is the HUNT's time zone that counts, not the viewer's or UTC: the same instants in Sydney (+11) and UTC
-  assert.equal(preStartText(start, at('2026-11-27T01:00:00Z'), 'UTC'), 'Game starts in 8 hours'); // same UTC day
-  assert.equal(preStartText(start, at('2026-11-27T01:00:00Z'), 'Pacific/Auckland'), 'Game starts in 8 hours'); // 14:00 for a 21:50 start, same NZ day
+  assert.equal(preStartText(start, at('2026-11-27T01:00:00Z'), 'UTC'), 'Game starts in 7 hours'); // same UTC day, 7 h 50 min to go
+  assert.equal(preStartText(start, at('2026-11-27T01:00:00Z'), 'Pacific/Auckland'), 'Game starts in 7 hours'); // 14:00 for a 21:50 start, same NZ day
   assert.equal(preStartText(start, at('2026-11-26T09:00:00Z'), 'Pacific/Auckland'), 'Game starts at 21:50 on Friday 27 Nov'); // 22:00 the evening before
   // a time zone the browser does not know falls back to UTC instead of breaking the page
   assert.equal(preStartText(start, at('2026-11-24T00:10:00Z'), 'Nowhere/Land'), 'Game starts at 08:50 on Friday 27 Nov');

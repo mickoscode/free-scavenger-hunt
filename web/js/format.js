@@ -31,14 +31,15 @@ function inZone(ms, timeZone) {
 
 // What the page says before the game starts, in the hunt's own time zone:
 //   another day:  "Game starts at 16:50 on Friday 27 Nov"
-//   the same day: "Game starts in 5 hours", then in minutes once under an hour, then m:ss for the last 5 minutes.
+//   the same day: "Game starts in 7 hours" while 6 hours or more away (rounded down, never up), then "2 h 25 min" counting by the minute,
+//                 then "45 min" under an hour, then m:ss for the last 5 minutes.
 export function preStartText(startMs, nowMs, timeZone) {
   const start = inZone(startMs, timeZone);
   if (start.date !== inZone(nowMs, timeZone).date) return `Game starts at ${start.time} on ${start.words}`;
   const left = Math.max(0, startMs - nowMs);
-  const minutes = Math.ceil(left / 60_000);
-  if (minutes >= 60) { const hours = Math.ceil(minutes / 60); return `Game starts in ${hours} hour${hours === 1 ? '' : 's'}`; }
-  return `Game starts in ${formatDuration(left)}`;
+  const hours = Math.floor(left / 3_600_000);
+  if (hours >= 6) return `Game starts in ${hours} hours`; // far off: whole hours, rounded down so it never reads later than it is
+  return `Game starts in ${formatDuration(left)}`; // 5 h 59 min ... 1 h 00 min, then 59 min ... 6 min, then 5:00 ... 0:00
 }
 
 export function ordinal(n) {
